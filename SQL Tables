@@ -1,0 +1,101 @@
+create table tUserKojolu
+(
+	user_id 		serial  				not null,
+	account_no 		int,
+	username		varchar(30)				not null,
+	cr_date 		timestamp 				not null,
+	login_count 	int 		default 1 	not null
+);
+
+
+
+create table tAccountKojolu
+(
+	account_no		serial		not null,
+	transaction_id  int
+);
+
+
+create table tTransactionKojolu
+(
+	transaction_id 	serial 						not null,
+	balance 		decimal(8,2) 	default 0	not null,
+	limit 			decimal(5,2) 	default 100,
+	date 			timestamp 					not null
+);
+
+create table tPlayRoomKojolu 
+(
+	room_id			serial						not null,
+	stake_amount	int		default 0 			not null,
+	win_amount		int		default 0 			not null,
+	current_players int		default 0			not null
+);
+
+create table tGameKojolu
+(
+	game_id			serial 		not null,
+	player_1_id		int			not null,
+	player_2_id 	int			not null,
+	room_id			int 		not null
+)
+
+alter table tUserKojolu add constraint (
+	primary key(user_id)
+		constraint cUserKojolu_pk
+);
+
+alter table tUserKojolu add constraint (
+	foreign key(account_no) references tAccountKojolu(account_no)
+		constraint cUserKojolu_f1
+);
+
+alter table tUserKojolu add constraint (
+	unique (username)
+		constraint cUserKojolu_u1
+);
+
+alter table tUserKojolu add constraint (
+	check (length(username) <> '')
+		constraint cUserKojolu_c1
+);
+	
+alter table tAccountKojolu add constraint (
+	primary key(account_no)
+		constraint cAccountKojolu_pk
+)
+
+alter table tAccountKojolu add constraint (
+	foreign key(transaction_id) references tTransactionKojolu(transaction_id)
+		constraint cAccountKojolu_f1
+);
+
+alter table tTransactionKojolu add constraint (
+	primary key(transaction_id)
+		constraint cTransactionKojolu_pk
+);
+
+alter table tPlayRoomKojolu add constraint (
+	primary key(room_id)
+		constraint cPlayRoomKojolu_pk
+);
+
+alter table tGameKojolu add constraint (
+	primary key(game_id)
+		constraint cGameKojolu_pk
+)
+
+alter table tGameKojolu add constraint (
+	foreign key(player_1_id) references tUserKojolu(user_id)
+		constraint cGameKojolu_f1
+);
+
+alter table tGameKojolu add constraint (
+	foreign key(player_2_id) references tUserKojolu(user_id)
+		constraint cGameKojolu_f2
+);
+
+alter table tGameKojolu add constraint (
+	foreign key(room_id) references tPlayRoomKojolu(room_id)
+		constraint cGameKojolu_f3
+);
