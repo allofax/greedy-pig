@@ -1,13 +1,11 @@
 create table tUserKojolu
 (
-	user_id 	serial  			not null,
-	account_no 	int,
-	username	varchar(30)			not null,
-	cr_date 	timestamp 			not null,
+	user_id 		serial  				not null,
+	account_no 		int,
+	username		varchar(30)				not null,
+	cr_date 		timestamp 				not null,
 	login_count 	int 		default 1 	not null
 );
-
-
 
 create table tAccountKojolu
 (
