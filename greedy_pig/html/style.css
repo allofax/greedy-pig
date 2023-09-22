@@ -322,7 +322,8 @@ main {
   display: flex;
 }
 
-#error-modal {
+#error-modal,
+#fund-modal {
   display: none; /* Hidden by default */
   position: fixed; /* Stay in place */
   z-index: 1; /* Sit on top */
@@ -335,7 +336,8 @@ main {
   background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
 }
 
-#error-modal-content {
+#error-modal-content,
+#fund-modal-content {
   padding: 20px;
   margin: 21% auto;
   position: relative;
@@ -356,4 +358,40 @@ main {
   color: white;
   font-size: 2em;
   padding: 1em;
+}
+
+#amount-input {
+  align-items: center;
+  align-self: center;
+  color: #444;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 1.8rem;
+  cursor: pointer;
+  font-weight: 400;
+  transition: all 0.2s;
+  background-color: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  padding: 0.7rem 2.5rem;
+  border-radius: 50rem;
+  box-shadow: 0 1.75rem 3.5rem rgba(0, 0, 0, 0.1);
+  width: -webkit-fill-available;
+}
+
+#fund-modal-deposit-text {
+  color: white;
+  font-size: 1.5em;
+}
+
+#gamble-responsibly-funds {
+  font-size: 2em;
+  color: white;
+}
+
+#wrap {
+  display: flex;
+  align-items: center;
+  margin-bottom: 3%;
+  margin-top: 7%;
 }
