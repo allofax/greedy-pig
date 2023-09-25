@@ -195,6 +195,7 @@ main {
   padding: 0.7rem 2.5rem;
   border-radius: 50rem;
   box-shadow: 0 1.75rem 3.5rem rgba(0, 0, 0, 0.1);
+  width: 25rem;
 }
 
 #username-input:focus {
