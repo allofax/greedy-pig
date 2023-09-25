@@ -1,17 +1,25 @@
+drop table tUserKojolu;
+drop table tAccountKojolu;
+drop table tTransactionKojolu;
+drop table tPlayRoomKojolu;
+drop table tGameKojolu;
+drop table tGameEventKojolu;
+
+
 create table tUserKojolu
 (
 	user_id 		serial  				not null,
 	username		varchar(30)				not null,
-	cr_date 		timestamp 				not null,
+	cr_date datetime year to second default CURRENT year to second not null,
 	login_count 	int 		default 1 	not null
 );
 
 create table tAccountKojolu
 (
 	account_no	serial		not null,
-	balance		decimal(8,2) 	default 0, 	not null
-	limit 		decimal(6,2) 	default 100,
-	last_top_up_time timestamp,
+	balance		decimal(8,2) 	default 0 	not null,
+	deposit_limit 		decimal(6,2) 	default 100,
+	last_top_up_time datetime year to second,
 	remaining_limit decimal(6,2) default 100,
 	user_id 	int			not null,
 	account_type varchar(30)
@@ -21,9 +29,9 @@ create table tAccountKojolu
 create table tTransactionKojolu
 (
 	transaction_id 	serial 		not null,
-	amount		deciaml(8,2) 	not null,
+	amount		decimal(8,2) 	not null,
 	transaction_type varchar(15) 	not null,
-	date 		timestamp 	not null,
+	date_now 		datetime year to second default CURRENT year to second	not null,
 	game_id		int,	
 	account_no 	int 		not null
 );
@@ -32,7 +40,7 @@ create table tPlayRoomKojolu
 (
 	room_id		serial		not null,
 	stake_amount	int		default 0 	not null,
-	win_amount	int		default 0 	not null,
+	win_amount	int		default 0 	not null
 );
 
 create table tGameKojolu
@@ -40,11 +48,11 @@ create table tGameKojolu
 	game_id		serial 		not null,
 	player_1_id	int		not null,
 	player_2_id 	int		not null,
-	room_id		int 		not null
+	room_id		int 		not null,
 	winner_id	int,		
 	loser_id	int,
-	start_time	timestamp	not null,
-	end_time	timestamp,
+	start_time	datetime year to second default CURRENT year to second	not null,
+	end_time	datetime year to second
 );
 
 create table tGameEventKojolu
@@ -53,11 +61,11 @@ create table tGameEventKojolu
 	current_player_id int 		not null,
 	waiting_player_id int		not null,
 	current_player_accum int 	default 0 not null,
-	time_event 		  timestamp,
+	time_event	datetime year to second,
 	roll_result	  int,
-	player_action	  char(4)
-	player_1_score 	int default 0,	not null,
-	player_2_score 	int default 0, 	not null,
+	player_action	  char(4),
+	player_1_score 	int default 0	not null,
+	player_2_score 	int default 0	not null,
 	game_id 		int 			not null
 );
 
@@ -79,7 +87,7 @@ alter table tUserKojolu add constraint (
 alter table tAccountKojolu add constraint (
 	primary key(account_no)
 		constraint cAccountKojolu_pk
-)
+);
 
 alter table tAccountKojolu add constraint (
 	foreign key(user_id) references tUserKojolu(user_id)
@@ -94,6 +102,11 @@ alter table tAccountKojolu add constraint (
 alter table tTransactionKojolu add constraint (
 	primary key(transaction_id)
 		constraint cTransactionKojolu_pk
+);
+
+alter table tGameKojolu add constraint (
+	primary key(game_id)
+		constraint cGameKojolu_pk
 );
 
 alter table tTransactionKojolu add constraint (
@@ -111,10 +124,7 @@ alter table tPlayRoomKojolu add constraint (
 		constraint cPlayRoomKojolu_pk
 );
 
-alter table tGameKojolu add constraint (
-	primary key(game_id)
-		constraint cGameKojolu_pk
-)
+
 
 alter table tGameKojolu add constraint (
 	foreign key(player_1_id) references tUserKojolu(user_id)
@@ -131,27 +141,23 @@ alter table tGameKojolu add constraint (
 		constraint cGameKojolu_f3
 );
 
-alter table tGameKojolu add constraint (
-	foreign key(event_id) references tGameEventKojolu(event_id)
-		constraint cGameKojolu_f4
-);
 
 alter table tGameEventKojolu add constraint (
 	primary key(event_id)
 		constraint cGameEventKojolu_pk
-)
+);
 
 alter table tGameEventKojolu add constraint (
 	foreign key(current_player_id) references tUserKojolu(user_id)
 		constraint cGameEventKojolu_f1
-)
+);
 
 alter table tGameEventKojolu add constraint (
 	foreign key(waiting_player_id) references tUserKojolu(user_id)
 		constraint cGameEventKojolu_f2
-)
+);
 
 alter table tGameEventKojolu add constraint (
-	foreign key(game_id) references tGameEventKojolu(game_id)
+	foreign key(game_id) references tGameKojolu(game_id)
 		constraint cGameEventKojolu_f3
-)
+);
