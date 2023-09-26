@@ -47,7 +47,7 @@ create table tGameKojolu
 (
 	game_id		serial 		not null,
 	player_1_id	int		not null,
-	player_2_id 	int		not null,
+	player_2_id 	int,
 	room_id		int 		not null,
 	winner_id	int,		
 	loser_id	int,
