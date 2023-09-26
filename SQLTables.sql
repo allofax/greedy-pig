@@ -39,8 +39,8 @@ create table tTransactionKojolu
 create table tPlayRoomKojolu 
 (
 	room_id		serial		not null,
-	stake_amount	int		default 0 	not null,
-	win_amount	int		default 0 	not null
+	stake_amount	decimal(6,2)		default 0 	not null,
+	win_amount	decimal(6,2)		default 0 	not null
 );
 
 create table tGameKojolu
