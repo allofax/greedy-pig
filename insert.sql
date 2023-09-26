@@ -12,4 +12,4 @@ values
 
 insert into tAccountKojolu (user_id, account_type)
 values
-(2, 'Debit');=
+(2, 'Debit');
