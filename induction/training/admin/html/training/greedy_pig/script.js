@@ -16,6 +16,18 @@ const btnHold = document.querySelector('.btn--hold');
 // Starting conditions
 let scores, currentScore, activePlayer, playing;
 
+
+
+function pollGame() {
+  let username = sessionStorage.getItem("username");
+  console.log(username);
+  var action_link = "http://dev02.openbet/lbielini.admin?action=KOJOLU_poll_Game&username=" + username;
+  fetch(action_link);
+  
+  setInterval(pollGame(), 1000000);
+}
+
+
 const init = function () {
   playing = true;
   currentScore = 0;
@@ -51,7 +63,7 @@ btnRoll.addEventListener('click', function () {
     console.log(dice);
     // 2. Display dice
     diceEl.classList.remove('hidden');
-    diceEl.src = `dice-${dice}.png`;
+    diceEl.src = `lbielini.admin/git_src/induction/training/greedy_pig/dice-${dice}.png`;
     // 3. Check for rolled 1: if true, switch to next player
     if (dice !== 1) {
       // Add dice to current score
