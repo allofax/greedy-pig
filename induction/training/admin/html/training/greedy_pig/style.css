@@ -205,6 +205,7 @@ main {
 #login-btn,
 #join-btn,
 #funds-btn,
+#deposit-btn,
 #modal-close-btn {
   align-self: center;
   margin-top: 8%;
@@ -224,6 +225,7 @@ main {
 }
 
 #funds-btn,
+#deposit-btn,
 #modal-close-btn {
   margin: 0%;
 }
@@ -236,6 +238,7 @@ main {
 #login-btn:hover,
 #join-btn:hover,
 #funds-btn:hover,
+#deposit-btn,
 #modal-close-btn:hover {
   transform: translate(0.5%, 3px);
 }

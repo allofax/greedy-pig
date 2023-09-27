@@ -11,8 +11,9 @@
   <body>
     <main>
       <form action="##TP_CGI_URL##" method="post" class="player--0 player--active" id="login-box">
-        <input type="hidden" name="action" value="KOJOLU_lobby" />
-			  <input placeholder="Username..."="text" id="username-input" name="username_id" size="5" value="" />
+        <input id="login-submit" type="hidden" name="action" value="KOJOLU_lobby" />
+        <input id="userid" type="hidden" name="userid" value="">
+			  <input placeholder="Username..."="text" id="username-input" name="username" size="5" value="" />
 			  <input id="login-btn" type="submit" value="LOGIN" onclick="send_details(event)" />
       </form>
 
@@ -28,7 +29,7 @@
           culpa qui officia deserunt mollit anim id est laborum.
         </p>
         <br />
-        <p id="rule-text">
+        <p id="rule-text"> 
           Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
           eiusmod tempor incididunt ut labore et dolore magna aliqua. Risus
           viverra adipiscing at in tellus integer. Lorem ipsum dolor sit amet,
@@ -40,8 +41,8 @@
         </p>
       </div>
     </main>
-    <script>
-      ##TP_INCL training/greedy_pig/login.js##
-    </script>
   </body>
+  <script>
+      ##TP_INCL training/greedy_pig/login.js##
+  </script>
 </html>
