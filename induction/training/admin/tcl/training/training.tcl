@@ -87,7 +87,7 @@ namespace eval TRAINING {
 
 			# create the new user account associated with user
 			set stmt [inf_prep_sql $DB $insert_new_user_account]
-			set rs   [
+			set rs   [inf_exec_stmt $stmt $user_id 0.00 100.00 100.00 $user_id Debit]
 
 			
 			db_close $rs
