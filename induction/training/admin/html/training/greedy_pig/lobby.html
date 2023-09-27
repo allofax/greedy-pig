@@ -21,6 +21,8 @@
     ##TP_IF {[tpGetVar err] == 1}## ##TP_err_msg## ##TP_ELSEIF
     {[tpGetVar found_room] == 1}##<br />
     ##TP_LOOP room_idx {[tpGetVar rooms]}##
+    <form>
+    <input type="hidden" name="action" value="KOJOLU_game" />
     <div class="room-box">
     <div class="player player--1" id="lobby-box">
     <p id="lobby-text">ROOM: ##TP_ROOM_ID##</p>
@@ -29,7 +31,7 @@
     <button id="join-btn">JOIN</button>
     </div>
     </div>
-
+    </form>
 
     <br />
     ##TP_ENDLOOP## 
@@ -46,18 +48,20 @@
     <div id="fund-modal">
       <div id="fund-modal-content">
         <div id="wrap">
-          <p id="fund-modal-deposit-text">DEPOSIT AMOUNT:</p>
+        <form action="##TP_CGI_URL##" method="post" id="deposit-box">
+        <input type="hidden" name="action" value="KOJOLU_deposit" />
+        <p id="fund-modal-deposit-text">DEPOSIT AMOUNT:</p>
           <input
             placeholder="Enter Amount"
             type="number"
             id="amount-input"
             min="0"
-          />
-        </div>
-        <p id="allowance-funds">AVAILABLE ALLOWANCE: £##TP_remaining_limit##</p>
+          />			  
+          <input id="deposit-btn" type="submit" onclick="test(event)" value="ADD FUNDS" />
+    
+          <p id="allowance-funds">AVAILABLE ALLOWANCE: £##TP_remaining_limit##</p>
 
-        <button id="deposit-btn" onclick="test(event)">ADD FUNDS</button>
-        <p id="gamble-responsibly-funds">When the funs stops, stop.</p>
+<p id="gamble-responsibly-funds">When the fun stops, stop.</p>
       </form>
       </div>
       </div>
