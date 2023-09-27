@@ -24,9 +24,17 @@ namespace eval TRAINING {
 		# statement used to insert a new user if the username entered doesn't already exist
 		set insert_new_user {
 			insert into 
-				tUSerKojolu (username)
+				tUserKojolu (username)
 			values
 				(?)
+		}
+
+		# statement used to create a new account associated for a new user.
+		set insert_new_user_account {
+			insert into 
+				tAccountKojolu (account_no, balance, deposit_limit, remaining_limit, user_id, account_type)
+			values
+				(?, ?, ?, ?, ?, ?)
 		}
 
 		# statement used to check if user exists
@@ -63,15 +71,22 @@ namespace eval TRAINING {
 			set stmt [inf_prep_sql $DB $get_users]
 			set rs   [inf_exec_stmt $stmt $username]
 
+			set user_id [db_get_col $rs 0 user_id]
+
 			append json_pairs "\{\"id\":\"[db_get_col $rs 0 user_id]\","
 			append json_pairs "\"username\":\"[db_get_col $rs 0 username]\"\}"
+
+			# create the new user account associated with user
+			set stmt [inf_prep_sql $DB $insert_new_user_account]
+			set rs   [inf_exec_stmt $stmt $user_id 0.00 100.00 100.00 $user_id Debit]
+
 			db_close $rs
 
 		} else {
 
 			append json_pairs "\{\"id\":\"[db_get_col $rs_users 0 user_id]\","
 			append json_pairs "\"username\":\"[db_get_col $rs_users 0 username]\"\}"
-			
+
 		}
 		
 		tpBindString JSON $json_pairs
