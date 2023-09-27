@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-  
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
@@ -14,8 +13,7 @@
       <form action="##TP_CGI_URL##" method="post" class="player--0 player--active" id="login-box">
         <input type="hidden" name="action" value="KOJOLU_lobby" />
 			  <input placeholder="Username..."="text" id="username-input" name="username_id" size="5" value="" />
-			  <input id="login-btn" type="submit" value="LOGIN" />
-    
+			  <input id="login-btn" type="submit" value="LOGIN" onclick="send_details(event)" />
       </form>
 
       <div class="player player--1" id="rule-box">
@@ -44,6 +42,6 @@
     </main>
     <script>
       ##TP_INCL training/greedy_pig/login.js##
-      </script>
+    </script>
   </body>
 </html>
