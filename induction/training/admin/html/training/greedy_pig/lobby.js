@@ -34,12 +34,17 @@ window.onclick = function (event) {
 //   fetch(action_link)
 // }
 
-function test () {
-  let username = 'Xavier'
+async function test () {
+  event.preventDefault()
+
+  let userid = sessionStorage.id
+  console.log("USER ID -======="+userid);
   let amount = inputDeposit.value
   console.log(amount)
-  let action_link = "##TP_CGI_URL##?action=KOJOLU_deposit&username=" + username + "&amount=" + amount;
+  let action_link = "http://dev02.openbet/kpietrzy.admin?action=KOJOLU_deposit&userid=" + userid + "&amount=" + amount;
   console.log(action_link)
   
-  fetch(action_link)
+  await fetch(action_link)
+  location.reload();
+
 }

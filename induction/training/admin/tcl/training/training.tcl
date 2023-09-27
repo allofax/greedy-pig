@@ -153,6 +153,7 @@ namespace eval TRAINING {
 	}
 
 		proc getUserAccount2 userId {
+			puts "INSIDE GET USERACCOUNT2 ================"
 		global DB
 
 		set sql {
@@ -232,46 +233,6 @@ namespace eval TRAINING {
 
 	}
 
-	proc getUserIdFromUsername {username} {
-		global DB
-		puts "$username INSIDE GETUSERIDFROMUSERNAME"
-		
-
-		set sql {
-			select
-				user_id
-			from
-				tUserKojolu
-			where username = ?;
-		}
-
-		if {[catch {set stmt [inf_prep_sql $DB $sql]} msg]} {
-			tpBindString err_msg "error occured while preparing statement"
-			ob::log::write ERROR {===>error: $msg}
-			tpSetVar err 1
-			return
-		}
-
-		if {[catch {set rs [inf_exec_stmt $stmt $username]} msg]} {
-			tpBindString err_msg "error occured while executing query"
-			ob::log::write ERROR {===>error: $msg}
-            catch {inf_close_stmt $stmt}
-			tpSetVar err 1
-			return
-		}
-
-		catch {inf_close_stmt $stmt}
-
-		if {[db_get_nrows $rs]} {
-			puts "==================== [db_get_col $rs 0 user_id]"
-			set user_id [db_get_col $rs 0 user_id]
-		}
-		
-		catch {db_close $rs}
-		puts "====================INSIDE IF $user_id"
-		return $user_id
-	}
-
 	proc getRoom {} {
 		global DB ROOM
 
@@ -325,12 +286,11 @@ namespace eval TRAINING {
 
 	proc deposit args {
 		puts "INSIDE DEPOSIT ====================================================="
-		set username [reqGetArg username]
-		puts "$username ================== INSIDE DEPOSIT USERNAME"
+		set userid [reqGetArg userid]
+		puts "$userid ================== INSIDE DEPOSIT USERNAME"
 		set amount [reqGetArg amount]
-		set user_id [getUserIdFromUsername $username]
 
-		puts "========================= $username $amount $user_id"
+		puts "========================= $userid $amount"
 
 		updateUserDeposit $user_id $amount
 
