@@ -336,6 +336,12 @@ namespace eval TRAINING {
 
 	}
 	
+
+	proc go_game args {
+		asPlayFile -nocache training/greedy_pig/index.html
+	}
+	
+
 	proc go_pollGame args {
 		set name [reqGetArg name]
 		puts "hi $name"
