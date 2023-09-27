@@ -3,8 +3,9 @@ namespace eval TRAINING {
 	asSetAct KOJOLU_GreedyPig         [namespace code go_greedy_pig]
 	asSetAct KOJOLU_lobby         	  [namespace code lobby]
 	asSetAct KOJOLU_deposit			  [namespace code deposit]
-	asSetAct KOJOLU_login_JSON    [namespace code go_login_JSON]
-	asSetAct KOJOLU_pollGame	[namespace code go_pollGame]
+	asSetAct KOJOLU_login_JSON   	  [namespace code go_login_JSON]
+	asSetAct KOJOLU_pollGame		  [namespace code go_pollGame]
+	asSetAct KOJOLU_game			  [namespace code go_game]
 
  	proc go_greedy_pig args {
   			asPlayFile -nocache training/greedy_pig/login.html
@@ -152,49 +153,6 @@ namespace eval TRAINING {
 		catch {db_close $rs}
 	}
 
-		proc getUserAccount2 userId {
-			puts "INSIDE GET USERACCOUNT2 ================"
-		global DB
-
-		set sql {
-			select
-				ta.balance,
-				ta.remaining_limit
-			from
-				tAccountKojolu ta
-			inner join 
-			tUserKojolu tu
-			on ta.user_id = tu.user_id
-			where tu.user_id = ?;
-		}
-
-		if {[catch {set stmt [inf_prep_sql $DB $sql]} msg]} {
-			tpBindString err_msg "error occured while preparing statement"
-			ob::log::write ERROR {===>error: $msg}
-			tpSetVar err 1
-			return
-		}
-
-		if {[catch {set rs [inf_exec_stmt $stmt $userId]} msg]} {
-			tpBindString err_msg "error occured while executing query"
-			ob::log::write ERROR {===>error: $msg}
-            catch {inf_close_stmt $stmt}
-			tpSetVar err 1
-			return
-		}
-
-		catch {inf_close_stmt $stmt}
-
-		if {[db_get_nrows $rs]} {
-			tpSetVar found_balance 1
-			tpBindString balance [db_get_col $rs 0 balance]
-			tpBindString remaining_limit [db_get_col $rs 0 remaining_limit]
-
-		}
-		
-		catch {db_close $rs}
-	}
-
 	proc updateUserDeposit {userId amount} {
 		global DB
 
@@ -228,7 +186,7 @@ namespace eval TRAINING {
 		catch {inf_close_stmt $stmt}
 		catch {db_close $rs}
 
-		getUserAccount2 $userId
+		
 
 
 	}
@@ -292,19 +250,16 @@ namespace eval TRAINING {
 
 		puts "========================= $userid $amount"
 
-		updateUserDeposit $user_id $amount
-
+		updateUserDeposit $userid $amount
 	}
-	
-
-	proc go_game args {
-		asPlayFile -nocache training/greedy_pig/index.html
-	}
-	
 
 	proc go_pollGame args {
 		set name [reqGetArg name]
 		puts "hi $name"
+	}
+
+	proc go_game args {
+		asPlayFile -nocache training/greedy_pig/index.html
 	}
 
 }

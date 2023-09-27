@@ -35,7 +35,6 @@ window.onclick = function (event) {
 // }
 
 async function test () {
-  event.preventDefault()
 
   let userid = sessionStorage.id
   console.log("USER ID -======="+userid);
