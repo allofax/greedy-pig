@@ -16,13 +16,6 @@ const btnHold = document.querySelector('.btn--hold');
 // Starting conditions
 let scores, currentScore, activePlayer, playing;
 
-const pollGame = function () {
-  let username = sessionStorage.get("username");
-  var action_link = "http://dev02.openbet/lbielini.admin?action=KOJOLU_poll_Game&username=" + username;
-  
-  setTimeout(pollGame(), 500);
-}
-
 const init = function () {
   playing = true;
   currentScore = 0;
