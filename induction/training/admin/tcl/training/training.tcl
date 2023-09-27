@@ -4,6 +4,7 @@ namespace eval TRAINING {
 	asSetAct KOJOLU_lobby         	  [namespace code lobby]
 	asSetAct KOJOLU_deposit			  [namespace code deposit]
 	asSetAct KOJOLU_login_JSON    [namespace code go_login_JSON]
+	asSetAct KOJOLU_pollGame	[namespace code go_pollGame]
 
  	proc go_greedy_pig args {
   			asPlayFile -nocache training/greedy_pig/login.html
@@ -334,4 +335,14 @@ namespace eval TRAINING {
 		updateUserDeposit $user_id $amount
 
 	}
+	
+	proc go_game args {
+		asPlayFile -nocache training/greedy_pig/index.html
+	}
+	
+	proc go_pollGame args {
+		set name [reqGetArg name]
+		puts "hi $name"
+	}
+
 }
