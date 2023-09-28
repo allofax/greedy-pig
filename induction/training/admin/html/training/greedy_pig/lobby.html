@@ -21,14 +21,19 @@
     ##TP_IF {[tpGetVar err] == 1}## ##TP_err_msg## ##TP_ELSEIF
     {[tpGetVar found_room] == 1}##<br />
     ##TP_LOOP room_idx {[tpGetVar rooms]}##
-    <form>
+    <form action="##TP_CGI_URL##" method="post" id="game-box">
     <input type="hidden" name="action" value="KOJOLU_game" />
+    <input type="hidden" id="userId" name="userId" value=##TP_userid## />
+    <input type="hidden" id="balance" name="balance" value=##TP_balance## />
+    <input type="hidden" id="roomId" name="roomId" value=##TP_ROOM_ID## />
+    <input type="hidden" id="roomStake" name="roomStake" value=##TP_ROOM_STAKE## />
+    <input type="hidden" name="roomWin" value=##TP_ROOM_WIN## />
     <div class="room-box">
     <div class="player player--1" id="lobby-box">
-    <p id="lobby-text">ROOM: ##TP_ROOM_ID##</p>
-    <p id="lobby-text">STAKE: £##TP_ROOM_STAKE##</p>
-    <p id="lobby-text">PRIZE: £##TP_ROOM_WIN##</p>
-    <button type="submit" id="join-btn">JOIN</button>
+    <p id="lobby-text" >ROOM: ##TP_ROOM_ID##</p>
+    <p id="lobby-text" >STAKE: £##TP_ROOM_STAKE##</p>
+    <p id="lobby-text" >PRIZE: £##TP_ROOM_WIN##</p>
+    <button type="submit" onclick="checkBalance(event, ##TP_balance##, ##TP_ROOM_STAKE##)" id="join-btn">JOIN</button>
     </div>
     </div>
     </form>
@@ -45,9 +50,9 @@
         <button id="modal-close-btn">OKAY</button>
       </div>
     </div>
-    <div id="fund-modal">
-      <div id="fund-modal-content">
-        <div id="wrap">
+    <div class="modal" id="fund-modal">
+      <div  class="modal-content" id="fund-modal-content">
+        <div class="wrap" id="wrap">
           <p id="fund-modal-deposit-text">DEPOSIT AMOUNT:</p>
           <input
             placeholder="Enter Amount"
@@ -61,6 +66,13 @@
 
         <button id="deposit-btn" onclick="test(event)">ADD FUNDS</button>
         <p id="gamble-responsibly-funds">When the funs stops, stop.</p>
+      </div>
+    </div>
+    <div class="modal" id="game-modal">
+      <div class="modal-content" id="game-modal-content">
+        <div class="wrap" id="wrap">
+          <p id="lobby-text">Lacking funds</p>
+        </div>
       </div>
     </div>
   </body>

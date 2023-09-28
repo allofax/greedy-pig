@@ -6,8 +6,12 @@ namespace eval TRAINING {
 	asSetAct KOJOLU_login  	  		  [namespace code go_login]
 	asSetAct KOJOLU_pollGame		  [namespace code go_pollGame]
 	asSetAct KOJOLU_game			  [namespace code go_game]
+<<<<<<< HEAD
 	asSetAct KOJOLU_checklimit		  [namespace code go_check_limit]
 	asSetAct KOJOLU_getallowance	  [namespace code get_allowance]
+=======
+	asSetAct KOJOLU_roll_dice 		[namespace code roll_dice_event]
+>>>>>>> 4756c8e (ADDING lucas Roll Dice, and Changes to joining a game)
 
  	proc go_greedy_pig args {
   			asPlayFile -nocache training/greedy_pig/login.html
@@ -55,6 +59,8 @@ namespace eval TRAINING {
 		getRoom
 
 		tpBindString username $username
+		tpBindString userid $userid
+
 		getUserAccount $userid
 
   		asPlayFile -nocache training/greedy_pig/lobby.html
@@ -316,8 +322,199 @@ namespace eval TRAINING {
 
 	proc go_game args {
 
+		gameInit
+
 		asPlayFile -nocache training/greedy_pig/index.html
 
+	}
+
+	proc gameInit {} {
+		set userId [reqGetArg userId]
+		set balance [reqGetArg balance]
+		set roomId [reqGetArg roomId]
+		set roomStake [reqGetArg roomStake]
+		set roomWin [reqGetArg roomWin]
+
+		puts "INSIDE GAME INIT  ======= $roomId $roomStake $roomWin $userId"
+
+		set gameId [findGame $roomId $userId]	
+
+		if {$gameId} {
+			joinGame $gameId $userId
+		} else {
+			createGame $roomId $userId
+
+		}
+
+	}
+
+	proc createGame {roomId player_one_id} {
+		global DB
+
+		set sql {
+			insert into 
+				tGameKojolu (room_id, player_1_id)
+			values
+				(?, ?)
+		}
+
+		if {[catch {set stmt [inf_prep_sql $DB $sql]} msg]} {
+			tpBindString err_msg "error occured while preparing statement"
+			ob::log::write ERROR {===>error: $msg}
+			tpSetVar err 1
+			return
+		}
+
+		if {[catch [inf_exec_stmt $stmt $roomId $player_one_id] msg]} {
+			tpBindString err_msg "error occured while executing query"
+			ob::log::write ERROR {===>error: $msg}
+            catch {inf_close_stmt $stmt}
+			tpSetVar err 1
+			return
+		}
+
+		catch {inf_close_stmt $stmt}
+
+		tpSetVar created_game 1
+		
+	
+		catch {db_close $rs}
+	}
+
+	proc findGame {roomId playerId} {
+		puts "INSIDE FIND GAMEEEE ROOM ID $roomId player id : $playerId"
+		global DB
+
+		set sql {
+			select 
+				game_id	
+			from 
+				tGameKojolu
+			where 
+				room_id = ? AND
+				end_time is NULL AND
+				(player_1_id = ? OR
+				player_2_id = ? OR
+				player_2_id is NULL)
+		}
+
+		if {[catch {set stmt [inf_prep_sql $DB $sql]} msg]} {
+			tpBindString err_msg "error occured while preparing statement"
+			ob::log::write ERROR {===>error: $msg}
+			tpSetVar err 1
+			return
+		}
+
+		if {[catch {set rs [inf_exec_stmt $stmt $roomId $playerId $playerId]} msg]} {
+			tpBindString err_msg "error occured while executing query"
+			ob::log::write ERROR {===>error: $msg}
+            catch {inf_close_stmt $stmt}
+			tpSetVar err 1
+			return
+		}
+
+		catch {inf_close_stmt $stmt}
+
+		if {[db_get_nrows $rs]} {
+			tpSetVar game_exists 1
+			#TODO add a check for the first game created and grab that one instead
+			set game_id [db_get_col $rs 0 game_id]
+			tpBindString game_id $game_id
+			puts "GAME HAS BEEN FOUND APPARENTLY [db_get_nrows $rs]" 
+
+			catch {db_close $rs}
+
+			return $game_id
+		} else {
+			tpSetVar game_exists 0
+			catch {db_close $rs}
+			return 0
+		}
+	
+		
+	}
+
+proc roll_dice_event args {
+		# Hardcoded game ID of one
+		
+		set current_player_id [reqGetArg current_player_id]
+		set waiting_player_id [reqGetArg waiting_player_id]
+		set current_player_accum [reqGetArg current_player_accum]
+		set roll_result [reqGetArg roll_result]
+		set player_1_score [reqGetArg player_1_score]
+		set player_2_score [reqGetArg player_2_score]
+		set player_action "ROLL"
+		set game_id [reqGetArg game_id] 		;#change later!
+	
+		global DB
+		
+		puts "===============================pre SQL statement for roll dice"
+	
+		set sql {
+			INSERT INTO
+				tGameEventKojolu (current_player_id, waiting_player_id,current_player_accum, time_event, roll_result, player_1_score, player_2_score, player_action, game_id)
+			VALUES
+				(?, ?, ?, CURRENT year to second, ?, ?, ?, ?);	
+		}
+		
+		puts "===============================pre execution"
+	
+		if {[catch {set stmt [inf_prep_sql $DB $sql]} msg]} {
+			tpBindString err_msg "error occured while preparing statement"
+			ob::log::write ERROR {===>error: $msg}
+			tpSetVar err 1
+			return
+		}
+	
+		if {[catch {set rs [inf_exec_stmt $stmt $current_player_id $waiting_player_id $current_player_accum $roll_result $player_1_score $player_2_score $player_action $game_id]} msg]} {
+			tpBindString err_msg "error occured while executing query"
+			ob::log::write ERROR {===>error: $msg}
+				catch {inf_close_stmt $stmt}
+			tpSetVar err 1
+			return
+		}
+		
+	puts "===============================post execution"
+}
+	proc go_pollGame args {
+		set name [reqGetArg name]
+		puts "hi $name"
+	}
+
+	proc joinGame {gameId playerId} {
+		puts "INSIDE OF JOIN GAMEEE"
+		global DB
+
+		set sql {
+			update
+				tGameKojolu 
+			set
+				player_2_id = ? 
+			where
+				game_id = ? AND
+				player_1_id != ?
+		}
+
+		if {[catch {set stmt [inf_prep_sql $DB $sql]} msg]} {
+			tpBindString err_msg "error occured while preparing statement"
+			ob::log::write ERROR {===>error: $msg}
+			tpSetVar err 1
+			return
+		}
+
+		if {[catch [inf_exec_stmt $stmt $playerId $gameId $playerId] msg]} {
+			tpBindString err_msg "error occured while executing query"
+			ob::log::write ERROR {===>error: $msg}
+            catch {inf_close_stmt $stmt}
+			tpSetVar err 1
+			return
+		}
+		tpSetVar joined_game 1
+
+		catch {inf_close_stmt $stmt}
+
+		catch {db_close $rs}
+		
 	}
 
 }

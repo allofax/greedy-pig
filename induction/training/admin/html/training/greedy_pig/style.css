@@ -327,7 +327,8 @@ main {
 }
 
 #error-modal,
-#fund-modal {
+
+.modal {
   display: none; /* Hidden by default */
   position: fixed; /* Stay in place */
   z-index: 1; /* Sit on top */
@@ -341,7 +342,8 @@ main {
 }
 
 #error-modal-content,
-#fund-modal-content {
+
+.modal-content{
   padding: 20px;
   margin: 21% auto;
   position: relative;
@@ -394,6 +396,13 @@ main {
 }
 
 #wrap {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1%;
+  margin-top: 4%;
+}
+
+.wrap {
   display: flex;
   align-items: center;
   margin-bottom: 1%;
