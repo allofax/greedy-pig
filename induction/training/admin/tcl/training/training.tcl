@@ -6,13 +6,49 @@ namespace eval TRAINING {
 	asSetAct KOJOLU_login  	  		  [namespace code go_login]
 	asSetAct KOJOLU_pollGame		  [namespace code go_pollGame]
 	asSetAct KOJOLU_game			  [namespace code go_game]
+	asSetAct KOJOLU_checklimit		  [namespace code go_check_limit]
+	asSetAct KOJOLU_getallowance	  [namespace code get_allowance]
 
  	proc go_greedy_pig args {
   			asPlayFile -nocache training/greedy_pig/login.html
 	}
 
-	proc lobby args {
+	proc go_check_limit args {
+		
+		global DB
 
+		set user_id [reqGetArg id]
+
+		set get_remaining_limit {
+			select 
+				remaining_limit,
+				last_top_up_time
+			from 
+				tUserKojolu tu,
+				tAccountKojolu ta
+			where
+				ta.user_id = tu.user_id and
+				ta.user_id = ?
+		}	
+
+		set stmt [inf_prep_sql $DB $get_remaining_limit]
+		set rs   [inf_exec_stmt $stmt $user_id]
+
+		set remaining_limit [db_get_col $rs 0 remaining_limit]
+
+		inf_close_stmt $stmt
+		db_close $rs	
+
+		if {$remaining_limit <= 0} {
+			build_json {"is_reached"} "1"
+		} else {
+			build_json {"is_reached" "remaining_limit"} "0 $remaining_limit"
+		}
+
+	}
+
+	proc lobby args {
+		
 		set userid [reqGetArg userid]
 		set username [reqGetArg username]
 
