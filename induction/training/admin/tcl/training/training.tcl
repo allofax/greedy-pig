@@ -6,12 +6,8 @@ namespace eval TRAINING {
 	asSetAct KOJOLU_login  	  		  [namespace code go_login]
 	asSetAct KOJOLU_pollGame		  [namespace code go_pollGame]
 	asSetAct KOJOLU_game			  [namespace code go_game]
-<<<<<<< HEAD
+	asSetAct KOJOLU_roll_dice 		  [namespace code roll_dice_event]
 	asSetAct KOJOLU_checklimit		  [namespace code go_check_limit]
-	asSetAct KOJOLU_getallowance	  [namespace code get_allowance]
-=======
-	asSetAct KOJOLU_roll_dice 		[namespace code roll_dice_event]
->>>>>>> 4756c8e (ADDING lucas Roll Dice, and Changes to joining a game)
 
  	proc go_greedy_pig args {
   			asPlayFile -nocache training/greedy_pig/login.html
