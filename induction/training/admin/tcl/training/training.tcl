@@ -3,18 +3,18 @@ namespace eval TRAINING {
 	asSetAct KOJOLU_GreedyPig         [namespace code go_greedy_pig]
 	asSetAct KOJOLU_lobby         	  [namespace code lobby]
 	asSetAct KOJOLU_deposit			  [namespace code deposit]
-	asSetAct KOJOLU_login_JSON   	  [namespace code go_login_JSON]
+	asSetAct KOJOLU_login  	  		  [namespace code go_login]
 	asSetAct KOJOLU_pollGame		  [namespace code go_pollGame]
 	asSetAct KOJOLU_game			  [namespace code go_game]
 
  	proc go_greedy_pig args {
   			asPlayFile -nocache training/greedy_pig/login.html
 	}
+
 	proc lobby args {
-		puts "INSIDE LOBBY =============================== [reqGetArg userid]"
+
 		set userid [reqGetArg userid]
 		set username [reqGetArg username]
-
 
 		getRoom
 
@@ -24,7 +24,8 @@ namespace eval TRAINING {
   		asPlayFile -nocache training/greedy_pig/lobby.html
 	}
 
-		proc go_login_JSON args {
+	proc go_login args {
+
 		global DB
 
 		# get username from request URL sent from frontend login.js
@@ -63,11 +64,10 @@ namespace eval TRAINING {
 		# number of users retrieved with entered username
 		set num_users [db_get_nrows $rs_users]
 
-		puts "==================================================="
-		puts "$num_users"
-		puts "==================================================="
+		puts "==================================================================="
+		puts "Number of users with username \($username\): $num_users -> \[MSG LOCATION: go_login proc\]"
+		puts "==================================================================="
 
-		set json_pairs ""
 
 		# if the number of users retrived is 0, the username doesn't exist so create a new user
 		if {$num_users == 0} {
@@ -81,34 +81,55 @@ namespace eval TRAINING {
 			set rs   [inf_exec_stmt $stmt $username]
 
 			set user_id [db_get_col $rs 0 user_id]
-
-			append json_pairs "\{\"id\":\"[db_get_col $rs 0 user_id]\","
-			append json_pairs "\"username\":\"[db_get_col $rs 0 username]\"\}"
+			set u_name [db_get_col $rs 0 username]
 
 			# create the new user account associated with user
 			set stmt [inf_prep_sql $DB $insert_new_user_account]
 			set rs   [inf_exec_stmt $stmt $user_id 0.00 100.00 100.00 $user_id Debit]
 
-			
-			db_close $rs
+			inf_close_stmt $stmt
+			db_close $rs	
+
+			build_json {"id" "username"} "$user_id $u_name"
 
 		} else {
-
-			append json_pairs "\{\"id\":\"[db_get_col $rs_users 0 user_id]\","
-			append json_pairs "\"username\":\"[db_get_col $rs_users 0 username]\"\}"
 			
+			set user_id [db_get_col $rs_users 0 user_id]
+			set u_name [db_get_col $rs_users 0 username]
+			
+			inf_close_stmt $stmt
+			db_close $rs_users
+
+			build_json {"id" "username"} "$user_id $u_name"
 		}
 		
-		tpBindString JSON $json_pairs
+	}
 
-		puts "==================================================="
-		puts "$json_pairs"
-		puts "==================================================="
+	# generalised json function, takes a list of keys (what items will be referenced as in the front end)
+	# and takes a list of values associated to the keys
+	# finally returns a JSONified string 
+	proc build_json {key_list value_list} {
 
-		inf_close_stmt $stmt
-		db_close $rs_users
+		set JSON ""
+		set open_brace "\{"
+		set end_brace "\}"
+		set json_string ""
+		set final_json ""
+		set list_length [llength $key_list]
 
-  		asPlayFile -nocache training/greedy_pig/login_json.html
+		for {set i 0} {$i < $list_length} {incr i} {
+
+			append json_string "\"[lindex $key_list $i]\":\"[lindex $value_list $i]\""
+
+			if {$i != [expr $list_length - 1] } {
+					append json_string ","
+			}
+		}
+
+		append JSON $open_brace$json_string$end_brace
+		tpBindString JSON $JSON
+
+  		asPlayFile -nocache training/greedy_pig/json.html
 	}
 
 	proc getUserAccount userId {
@@ -149,7 +170,6 @@ namespace eval TRAINING {
 			tpBindString remaining_limit [db_get_col $rs 0 remaining_limit]
 
 		}
-		
 		catch {db_close $rs}
 	}
 
@@ -186,12 +206,10 @@ namespace eval TRAINING {
 		catch {inf_close_stmt $stmt}
 		catch {db_close $rs}
 
-		
-
-
 	}
 
 	proc getRoom {} {
+
 		global DB ROOM
 
 		set sql {
@@ -221,13 +239,16 @@ namespace eval TRAINING {
 		catch {inf_close_stmt $stmt}
 
 		if {[db_get_nrows $rs]} {
+
 			tpSetVar found_room 1
 
 		}
+
 		set amountRows [db_get_nrows $rs]
 		tpSetVar rooms $amountRows 
 
 		for {set i 0} {$i < $amountRows} {incr i} {
+
 			set ROOM($i,room_id) [db_get_col $rs $i room_id]
 			set ROOM($i,stake_amount) [db_get_col $rs $i stake_amount]
 			set ROOM($i,win_amount) [db_get_col $rs $i win_amount]
@@ -243,23 +264,24 @@ namespace eval TRAINING {
 	}
 
 	proc deposit args {
-		puts "INSIDE DEPOSIT ====================================================="
-		set userid [reqGetArg userid]
-		puts "$userid ================== INSIDE DEPOSIT USERNAME"
-		set amount [reqGetArg amount]
 
-		puts "========================= $userid $amount"
+		set userid [reqGetArg userid]
+		set amount [reqGetArg amount]
 
 		updateUserDeposit $userid $amount
 	}
 
 	proc go_pollGame args {
+
 		set name [reqGetArg name]
 		puts "hi $name"
+
 	}
 
 	proc go_game args {
+
 		asPlayFile -nocache training/greedy_pig/index.html
+
 	}
 
 }
