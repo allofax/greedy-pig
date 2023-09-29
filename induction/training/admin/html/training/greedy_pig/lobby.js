@@ -25,15 +25,27 @@ btn.onclick = function () {
       console.log(data)
       console.log(JSON.parse(data))
       var res = JSON.parse(data)
+
       var is_reached = res["is_reached"]
       sessionStorage.setItem("remaining_limit", res["remaining_limit"])
       
       if  (is_reached == 1) {
-        var modal = document.getElementById("error-modal");        
+
+        sessionStorage.setItem("next_top_up_time", res["next_top_up_time"])
+        var modal = document.getElementById("error-modal");
+        var modal_time = document.getElementById("error-modal-text-time") 
+
+        modal_time.innerHTML = `You will be able to deposit again at ${sessionStorage.next_top_up_time}`        
         okay_btn.addEventListener("click", function () {modal.style.display = "none";})
       }
       else {
-        var modal = document.getElementById("fund-modal");        
+        if (res.refresh == undefined){
+           var modal = document.getElementById("fund-modal"); 
+        }
+        else {
+          location.reload()
+        }
+
       }
 
       modal.style.display = "block";
@@ -71,7 +83,7 @@ function box_col(event) {
           else if (inputValue > 100) {
             error_text.innerHTML = "Cannot deposit more than £100.00 a day"          
             error_text.style.display = "block"  
-            modal_content.style.height = "18rem"                      
+            modal_content.style.height = "20rem"                      
           }
 
       } else {
