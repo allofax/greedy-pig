@@ -8,6 +8,7 @@ namespace eval TRAINING {
 	asSetAct KOJOLU_game			  [namespace code go_game]
 	asSetAct KOJOLU_roll_dice 		  [namespace code roll_dice_event]
 	asSetAct KOJOLU_checklimit		  [namespace code go_check_limit]
+	asSetAct KOJOLU_roll_dice_event   [namespace code roll_dice_event]
 
  	proc go_greedy_pig args {
   			asPlayFile -nocache training/greedy_pig/login.html
@@ -15,8 +16,6 @@ namespace eval TRAINING {
 
 	proc go_check_limit args {
 		
-		#TODO implement 24hr check
-
 		global DB
 
 		set user_id [reqGetArg id]
@@ -33,18 +32,64 @@ namespace eval TRAINING {
 				ta.user_id = ?
 		}	
 
+		set reset_limit {
+			update
+				tAccountKojolu ta
+			set 
+				remaining_limit = 100,
+				last_top_up_time = CURRENT year to second
+			where
+				ta.account_no = ?
+		}
+
 		set stmt [inf_prep_sql $DB $get_remaining_limit]
 		set rs   [inf_exec_stmt $stmt $user_id]
 
 		set remaining_limit [db_get_col $rs 0 remaining_limit]
+		set last_top_up_time [db_get_col $rs 0 last_top_up_time]
 
 		inf_close_stmt $stmt
 		db_close $rs	
 
-		if {$remaining_limit <= 0} {
-			build_json {"is_reached"} "1"
+		# user hasn't made a deposit before
+		if {$last_top_up_time == ""} {
+
+			build_json {"is_reached"} [list 0]
+			return
+			
+		}
+
+		# Get the current time in the same format as db time (year to seconds)
+		set current_time [clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"]
+
+		# Convert both times to Unix timestamps
+		set last_top_up_timestamp [clock scan $last_top_up_time -format "%Y-%m-%d %H:%M:%S"]
+		set current_timestamp [clock scan $current_time -format "%Y-%m-%d %H:%M:%S"]
+
+		# Calculate the time difference in seconds
+		set time_difference [expr {$current_timestamp - $last_top_up_timestamp}]
+
+		# if 24hrs have passed, reset user's remaining limit
+		if {$time_difference >= 86400} {
+
+			set stmt [inf_prep_sql $DB $reset_limit]
+			inf_exec_stmt $stmt $user_id
+			
+			inf_close_stmt $stmt
+			build_json {"is_reached" "remaining_limit" "refresh"} "0 100 1"
+
+		} elseif {$remaining_limit <= 0} {
+
+			# Calculate the next top-up time
+			set next_top_up_timestamp [expr {$last_top_up_timestamp + 86400}]
+			set next_top_up_time [clock format $next_top_up_timestamp -format "%Y-%m-%d %H:%M:%S"]
+
+			build_json {"is_reached" "next_top_up_time"} [list 1 "$next_top_up_time"]
+
 		} else {
+ 
 			build_json {"is_reached" "remaining_limit"} "0 $remaining_limit"
+
 		}
 
 	}
@@ -149,13 +194,13 @@ namespace eval TRAINING {
 	# and takes a list of values associated to the keys
 	# finally returns a JSONified string 
 	proc build_json {key_list value_list} {
-
 		set JSON ""
 		set open_brace "\{"
 		set end_brace "\}"
 		set json_string ""
 		set final_json ""
 		set list_length [llength $key_list]
+
 
 		for {set i 0} {$i < $list_length} {incr i} {
 
@@ -432,48 +477,55 @@ namespace eval TRAINING {
 		
 	}
 
-proc roll_dice_event args {
-		# Hardcoded game ID of one
+	proc roll_dice_event args {
+			# Hardcoded game ID of one
+			
+			puts "===============================pre reqGetArgs in roll_dice_event"
+			
+			set current_player_id [reqGetArg current_player_id]
+			set waiting_player_id [reqGetArg waiting_player_id]
+			set current_player_accum [reqGetArg current_player_accum]
+			set roll_result [reqGetArg roll_result]
+			set player_1_score [reqGetArg player_1_score]
+			set player_2_score [reqGetArg player_2_score]
+			set player_action "ROLL"
+			set game_id [reqGetArg game_id] 		;#change later!
 		
-		set current_player_id [reqGetArg current_player_id]
-		set waiting_player_id [reqGetArg waiting_player_id]
-		set current_player_accum [reqGetArg current_player_accum]
-		set roll_result [reqGetArg roll_result]
-		set player_1_score [reqGetArg player_1_score]
-		set player_2_score [reqGetArg player_2_score]
-		set player_action "ROLL"
-		set game_id [reqGetArg game_id] 		;#change later!
-	
-		global DB
+			global DB
+			
+			puts "===============================pre SQL statement for roll dice"
+			# error with current year to second in sql statement?
 		
-		puts "===============================pre SQL statement for roll dice"
-	
-		set sql {
-			INSERT INTO
-				tGameEventKojolu (current_player_id, waiting_player_id,current_player_accum, time_event, roll_result, player_1_score, player_2_score, player_action, game_id)
-			VALUES
-				(?, ?, ?, CURRENT year to second, ?, ?, ?, ?);	
-		}
+			set sql {
+				INSERT INTO
+					tGameEventKojolu (current_player_id, waiting_player_id, current_player_accum, time_event, roll_result, player_1_score, player_2_score, player_action, game_id)
+				VALUES
+					(?, ?, ?, CURRENT year to second, ?, ?, ?, ?, ?);	
+			}
+			
+			puts "===============================pre execution"
 		
-		puts "===============================pre execution"
-	
-		if {[catch {set stmt [inf_prep_sql $DB $sql]} msg]} {
-			tpBindString err_msg "error occured while preparing statement"
-			ob::log::write ERROR {===>error: $msg}
-			tpSetVar err 1
-			return
-		}
-	
-		if {[catch {set rs [inf_exec_stmt $stmt $current_player_id $waiting_player_id $current_player_accum $roll_result $player_1_score $player_2_score $player_action $game_id]} msg]} {
-			tpBindString err_msg "error occured while executing query"
-			ob::log::write ERROR {===>error: $msg}
-				catch {inf_close_stmt $stmt}
-			tpSetVar err 1
-			return
-		}
+			if {[catch {set stmt [inf_prep_sql $DB $sql]} msg]} {
+				tpBindString err_msg "error occured while preparing statement"
+				ob::log::write ERROR {===>error: $msg}
+				tpSetVar err 1
+				return
+			}
 		
-	puts "===============================post execution"
-}
+			if {[catch {set rs [inf_exec_stmt $stmt $current_player_id $waiting_player_id $current_player_accum $roll_result $player_1_score $player_2_score $player_action $game_id]} msg]} {
+				tpBindString err_msg "error occured while executing query"
+				ob::log::write ERROR {===>error: $msg}
+					catch {inf_close_stmt $stmt}
+				tpSetVar err 1
+				return
+			}
+			
+		puts "===============================post execution"
+		
+		catch {inf_close_stmt $stmt}
+		catch {db_close $rs}
+	}
+
 	proc go_pollGame args {
 		set name [reqGetArg name]
 		puts "hi $name"
