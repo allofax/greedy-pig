@@ -54,20 +54,24 @@ btnRoll.addEventListener('click', function () {
     // roll_result, player_1_score, player_2_score, player_action (and game_id which is hardcoded)
     
 	 // also - testing on predetermined figures
+	 if (dice !== 1) {
+      // Add dice to current score
+      currentScore += dice;
+      document.getElementById(`current--${activePlayer}`).textContent = currentScore;
+    }
 	 console.log("========pre fetch");
-    var action_link = "##TP_CGI_URL##?KOJOLU_roll_dice_event&current_player_id=1&waiting_player_id=2&current_player_accum=" + currentScore + "&roll_result=" + dice + "&player_1_score=" + scores[0] + "&player_2_score=" +scores[1] + "&game_id=1";
+    var action_link = "##TP_CGI_URL##?action=KOJOLU_roll_dice_event&current_player_id=1&waiting_player_id=2&current_player_accum=" + currentScore + "&roll_result=" + dice + "&player_1_score=" + scores[0] + "&player_2_score=" +scores[1] + "&game_id=1";
+    console.log("the action link is " + action_link);    
     fetch(action_link);
     console.log("========post fetch");
+    
+    
     // 3. Display dice
     diceEl.classList.remove('hidden');
     diceEl.src = `https://github.com/allofax/greedy-pig/blob/main/induction/training/admin/html/training/greedy_pig/dice-${dice}.png?raw=true`;
     // 4. Check for rolled 1: if true, switch to next player
-    if (dice !== 1) {
-      // Add dice to current score
-      currentScore += dice;
-      document.getElementById(`current--${activePlayer}`).textContent =
-        currentScore;
-    } else {
+    if (dice == 1) {
+    	// add some code here to change to the other player
       // Switch to the next player
       switchPlayer();
     }
