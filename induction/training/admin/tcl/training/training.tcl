@@ -15,6 +15,8 @@ namespace eval TRAINING {
 
 	proc go_check_limit args {
 		
+		#TODO implement 24hr check
+
 		global DB
 
 		set user_id [reqGetArg id]
