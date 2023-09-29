@@ -327,7 +327,6 @@ main {
 }
 
 #error-modal,
-
 .modal {
   display: none; /* Hidden by default */
   position: fixed; /* Stay in place */
@@ -409,9 +408,31 @@ main {
   margin-top: 4%;
 }
 
-#allowance-funds {
+#allowance-funds, #invalid-funds {
   color: white;
   font-size: 1.5em;
   margin-left: 12%;
-  margin-bottom: 3%;
+}
+
+#invalid-funds {
+  display: none;
+  color: #db6767;
+  margin-left: 18%;
+  font-size: 1.5em;
+}
+
+#invalid-username {
+  display: none;
+  color: #db6767;
+  font-size: 1.5em;
+  text-align: center;
+  margin-top: 3%;
+}
+
+#low-funds {
+  color: white;
+  text-align: center;
+  margin: auto;
+  font-size: 2em;
+  margin-top: 10%;
 }

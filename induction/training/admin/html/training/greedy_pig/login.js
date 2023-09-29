@@ -7,6 +7,15 @@ function send_details(event)
     event.preventDefault()
     
     var username = document.querySelector("input[name='username']").value.trim();
+    var error_text = document.getElementById("invalid-username")
+
+    if (username === "")
+    {
+        error_text.style.display = "block"
+        return
+    }
+
+
     console.log(username)
     var action_link = "##TP_CGI_URL##?action=KOJOLU_login&username=" + username;
 

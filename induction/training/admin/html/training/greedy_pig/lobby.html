@@ -59,11 +59,11 @@
             type="number"
             id="amount-input"
             min="0"
-            onchange="box_col()"
+            oninput="box_col(event)"
           />
         </div>
         <p id="allowance-funds">AVAILABLE ALLOWANCE: £##TP_remaining_limit##</p>
-
+        <p id="invalid-funds">error text</p>
         <button id="deposit-btn" onclick="test(event)">ADD FUNDS</button>
         <p id="gamble-responsibly-funds">When the funs stops, stop.</p>
       </div>
@@ -71,7 +71,7 @@
     <div class="modal" id="game-modal">
       <div class="modal-content" id="game-modal-content">
         <div class="wrap" id="wrap">
-          <p id="lobby-text">Lacking funds</p>
+          <p id="low-funds">You do not have enough funds to join this room</p>
         </div>
       </div>
     </div>
