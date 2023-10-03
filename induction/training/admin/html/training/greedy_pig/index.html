@@ -32,6 +32,11 @@
       <button class="btn btn--roll">🎲 Roll dice</button>
       <button class="btn btn--hold">📥 Hold</button>
     </main>
+    ##TP_IF {[tpGetVar loading] == 1}## ##TP_err_msg##
+    <div class="loading-spinner__overlay">
+        <div class="lds-dual-ring"></div>
+    </div>
+    ##TP_ENDIF##
 
     <script>
     	##TP_PLAY training/greedy_pig/script.js##

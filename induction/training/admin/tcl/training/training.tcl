@@ -9,6 +9,8 @@ namespace eval TRAINING {
 	asSetAct KOJOLU_roll_dice 		  [namespace code roll_dice_event]
 	asSetAct KOJOLU_checklimit		  [namespace code go_check_limit]
 	asSetAct KOJOLU_roll_dice_event   [namespace code roll_dice_event]
+	asSetAct KOJOLU_findRoomJSON   	  [namespace code findRoomJSON]
+
 
  	proc go_greedy_pig args {
   			asPlayFile -nocache training/greedy_pig/login.html
@@ -105,8 +107,8 @@ namespace eval TRAINING {
 		tpBindString userid $userid
 
 		getUserAccount $userid
-
   		asPlayFile -nocache training/greedy_pig/lobby.html
+		
 	}
 
 	proc go_login args {
@@ -261,14 +263,6 @@ namespace eval TRAINING {
 	proc updateUserDeposit {userId amount} {
 		global DB
 
-		# statment that logs transactions for deposits 
-		set insert_transaction {
-			insert into 
-				tTransactionKojolu (amount, transaction_type, account_no)
-			values
-				(?, ?, ?)
-		}
-
 		set sql {
 			update 
 				tAccountKojolu
@@ -299,11 +293,6 @@ namespace eval TRAINING {
 		catch {inf_close_stmt $stmt}
 		catch {db_close $rs}
 
-		# insert deposit as transaction
-		set stmt [inf_prep_sql $DB $insert_transaction]
-		inf_exec_stmt $stmt $amount DEPOSIT $userId 
-
-		inf_close_stmt $stmt
 	}
 
 	proc getRoom {} {
@@ -376,29 +365,95 @@ namespace eval TRAINING {
 
 	}
 
-	proc go_game args {
+	proc go_game args {	
 
 		gameInit
 
+
+
 		asPlayFile -nocache training/greedy_pig/index.html
+
 
 	}
 
 	proc gameInit {} {
+		global roomIdPlayer
 		set userId [reqGetArg userId]
 		set balance [reqGetArg balance]
 		set roomId [reqGetArg roomId]
 		set roomStake [reqGetArg roomStake]
 		set roomWin [reqGetArg roomWin]
+		tpBindString roomIdPlayer $roomId
 
 		puts "INSIDE GAME INIT  ======= $roomId $roomStake $roomWin $userId"
 
 		set gameId [findGame $roomId $userId]	
 
 		if {$gameId} {
+			puts "JOINIG GAME $gameId"
 			joinGame $gameId $userId
+			pollPlayerTwo $gameId
 		} else {
+			puts "cREATING GAME"
 			createGame $roomId $userId
+			updateUserDeposit $userId "\-$roomStake"
+			pollPlayerTwo [findGame $roomId $userId]
+		}
+
+	}
+
+	proc checkBalanceForGame {userId roomStake} {
+		global DB
+
+		puts "CHECKING BALNACE =============+ USER ID $userId, roomStakte $roomStake"
+
+		set sql {
+			select
+				ta.balance
+			from
+				tAccountKojolu ta
+			inner join 
+			tUserKojolu tu
+			on ta.user_id = tu.user_id
+			where tu.user_id = ?;
+		}
+
+		if {[catch {set stmt [inf_prep_sql $DB $sql]} msg]} {
+			tpBindString err_msg "error occured while preparing statement"
+			ob::log::write ERROR {===>error: $msg}
+			tpSetVar err 1
+			return
+		}
+
+		if {[catch {set rs [inf_exec_stmt $stmt $userId]} msg]} {
+			tpBindString err_msg "error occured while executing query"
+			ob::log::write ERROR {===>error: $msg}
+            catch {inf_close_stmt $stmt}
+			tpSetVar err 1
+			return
+		}
+
+		catch {inf_close_stmt $stmt}
+
+		if {[db_get_nrows $rs]} {
+			set balance [db_get_col $rs 0 balance]
+		}
+		catch {db_close $rs}
+
+		puts "INISDE CHECK BALANCE ============== BALANCE IS $balance"
+
+		if {$balance < $roomStake} {
+			set fundAvailable 0
+			tpSetVar funds $fundAvailable
+			puts "INISDE IF FUNDSAVAILBE ============== FUND AVAILBE $fundAvailable"
+
+			return $fundAvailable
+		} else {
+			set fundAvailable 1
+			tpSetVar funds $fundAvailable
+			puts "INISDE IF FUNDSAVAILBE ============== FUND AVAILBE $fundAvailable"
+
+			return $fundAvailable
 
 		}
 
@@ -562,6 +617,7 @@ namespace eval TRAINING {
 			tpBindString err_msg "error occured while preparing statement"
 			ob::log::write ERROR {===>error: $msg}
 			tpSetVar err 1
+			puts "INISDE OF SET STMT ==================="
 			return
 		}
 
@@ -579,5 +635,68 @@ namespace eval TRAINING {
 		catch {db_close $rs}
 		
 	}
+
+
+	proc findRoomJSON args {
+		set roomId [reqGetArg roomId]
+		set userId [reqGetArg userId]
+
+		set room [findGame $roomId $userId]
+
+		build_json {"room"} "$room"
+
+	}
+
+	proc pollPlayerTwo {gameId} {
+		puts "INSIDE POLL PLAYER 2"
+		global DB
+
+		set sql {
+			select 
+				player_2_id
+			from 
+				tGameKojolu
+			where 
+				game_id = ? AND
+				player_2_id is not null
+		}
+
+		if {[catch {set stmt [inf_prep_sql $DB $sql]} msg]} {
+			tpBindString err_msg "error occured while preparing statement"
+			ob::log::write ERROR {===>error: $msg}
+			tpSetVar err 1
+			return
+		}
+
+		if {[catch {set rs [inf_exec_stmt $stmt $gameId]} msg]} {
+			tpBindString err_msg "error occured while executing query"
+			ob::log::write ERROR {===>error: $msg}
+            catch {inf_close_stmt $stmt}
+			tpSetVar err 1
+			return
+		}
+
+		catch {inf_close_stmt $stmt}
+
+
+		puts "AMOUNT OF ROWS IS [db_get_nrows $rs]"
+		if {[db_get_nrows $rs]} {
+			tpSetVar loading 0
+			tpSetVar game_exists 1
+			set game_id [db_get_col $rs 0 player_2_id]
+			tpBindString game_id $game_id
+			puts "GAME HAS BEEN FOUND APPARENTLY [db_get_nrows $rs]" 
+
+			catch {db_close $rs}
+
+		} else {
+			tpSetVar loading 1
+			tpSetVar game_exists 0
+			catch {db_close $rs}
+
+		}
+	}
+
+	
 
 }

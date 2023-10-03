@@ -16,6 +16,18 @@ const btnHold = document.querySelector('.btn--hold');
 // Starting conditions
 let scores, currentScore, activePlayer, playing;
 
+window.onload = (event) => {
+  const userId = sessionStorage.id
+  let action_link = "##TP_CGI_URL##?action=KOJOLU_findRoomJSON&roomId=" + ##TP_roomIdPlayer## + "&userId=" + userId;
+  fetch(action_link)
+  .then(data => data.text())
+  .then(result => {console.log(result) 
+    let gameId = JSON.parse(result).room
+    sessionStorage.setItem("gameId", gameId)
+  })
+
+};
+
 const init = function () {
   playing = true;
   currentScore = 0;

@@ -6,14 +6,12 @@ function send_details(event)
 {
     event.preventDefault()
     
-    let username_element = document.querySelector("input[name='username']")
-    let username = document.querySelector("input[name='username']").value.trim();
-    let error_text = document.getElementById("invalid-username")
+    var username = document.querySelector("input[name='username']").value.trim();
+    var error_text = document.getElementById("invalid-username")
 
     if (username === "")
     {
         error_text.style.display = "block"
-        username_element.style.background = "#db6767";
         return
     }
 

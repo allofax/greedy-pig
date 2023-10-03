@@ -4,9 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <style>##TP_INCL training/greedy_pig/style.css##</style>
+    <style>##TP_INCL training/greedy_pig/style.css## </style>
     <title>Lobby</title>
   </head>
+
   <div id="container">
     <p id="welcome-text">WELCOME ##TP_username##</p>
     <div id="bal-funds">
@@ -15,13 +16,13 @@
     </div>
   </div>
   <body>
-
+  </div>
     <ul>
     <br />
     ##TP_IF {[tpGetVar err] == 1}## ##TP_err_msg## ##TP_ELSEIF
     {[tpGetVar found_room] == 1}##<br />
     ##TP_LOOP room_idx {[tpGetVar rooms]}##
-    <form action="##TP_CGI_URL##" method="post" id="game-box">
+    <form action="##TP_CGI_URL##" method="post" id="game-box##TP_ROOM_ID##">
     <input type="hidden" name="action" value="KOJOLU_game" />
     <input type="hidden" id="userId" name="userId" value=##TP_userid## />
     <input type="hidden" id="balance" name="balance" value=##TP_balance## />
@@ -33,7 +34,7 @@
     <p id="lobby-text" >ROOM: ##TP_ROOM_ID##</p>
     <p id="lobby-text" >STAKE: £##TP_ROOM_STAKE##</p>
     <p id="lobby-text" >PRIZE: £##TP_ROOM_WIN##</p>
-    <button type="submit" onclick="checkBalance(event, ##TP_balance##, ##TP_ROOM_STAKE##)" id="join-btn">JOIN</button>
+    <button type="submit" onclick="checkBalance(event, ##TP_ROOM_ID##, ##TP_userid##, ##TP_balance##, ##TP_ROOM_STAKE##)" id="join-btn">JOIN</button>
     </div>
     </div>
     </form>

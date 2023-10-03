@@ -13,6 +13,7 @@ const btnLobby = document.getElementById("join-btn")
 let userid = document.getElementById("userId")
 var error_text = document.getElementById("invalid-funds")
 
+
 // When the user clicks on the button, open the modal
 btn.onclick = function () {
 
@@ -102,12 +103,23 @@ function box_col(event) {
 
 
 // Check if user Balance is greater than stake
-function checkBalance (event, balance, roomStake) {
+async function checkBalance (event, roomId, userId, balance, roomStake) {   
+  event.preventDefault();
+  let action_link = "##TP_CGI_URL##?action=KOJOLU_findRoomJSON&roomId=" + roomId + "&userId=" + userId;
+  let gameId = ""
 
-  if (balance < roomStake) {
-    event.preventDefault();
+  await fetch(action_link)
+  .then(data => data.text())
+  .then(result => {console.log(result) 
+    gameId = JSON.parse(result).room
+
+  })
+
+  if ((parseInt(gameId) == 0) && balance < roomStake) {
     gameModal.style.display = "block";
-  } 
+  } else {
+    document.getElementById(`game-box${roomId}`).submit()
+  }
 }
 
 async function test () {
