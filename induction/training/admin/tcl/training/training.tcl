@@ -263,6 +263,15 @@ namespace eval TRAINING {
 	proc updateUserDeposit {userId amount} {
 		global DB
 
+
+		# statment that logs transactions for deposits 
+		set insert_transaction {
+			insert into 
+				tTransactionKojolu (amount, transaction_type, account_no)
+			values
+				(?, ?, ?)
+		}
+
 		set sql {
 			update 
 				tAccountKojolu
@@ -292,6 +301,12 @@ namespace eval TRAINING {
 
 		catch {inf_close_stmt $stmt}
 		catch {db_close $rs}
+		
+		# insert deposit as transaction
+		set stmt [inf_prep_sql $DB $insert_transaction]
+		inf_exec_stmt $stmt $amount DEPOSIT $userId 
+
+		inf_close_stmt $stmt
 
 	}
 
