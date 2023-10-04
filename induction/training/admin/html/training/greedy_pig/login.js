@@ -2,6 +2,10 @@
 
 let userid = document.getElementById('userid')
 
+window.onload = (event) => {
+    sessionStorage.clear()
+} 
+
 function send_details(event)
 {
     event.preventDefault()

@@ -12,6 +12,127 @@ namespace eval TRAINING {
 	asSetAct KOJOLU_findRoomJSON   	  [namespace code findRoomJSON]
 	asSetAct KOJOLU_roll_one_event   [namespace code roll_one_event]
 	asSetAct KOJOLU_hold_event			[namespace code go_hold_event]
+	asSetAct KOJOLU_PollPlayerTwo     [namespace code pollPlayerTwo]
+	asSetAct KOJOLU_insertFirst       [namespace code insert_first_event]
+
+	proc insert_first_event args {
+
+		set game_id [reqGetArg gameId]
+
+		global DB
+
+		set get_usernames {
+			select 
+				username 
+			from 
+				tUserKojolu 
+			where 
+				user_id 
+			in 
+				(?,?) 
+		}
+
+		set check_empty_events {
+
+			select 
+				event_id
+			from
+				tGameEventKojolu 
+			where
+				game_id = ?
+		}
+
+		set get_player_ids {
+			
+			select
+				player_1_id,
+				player_2_id
+			from 
+				tGameKojolu
+			where 
+				game_id = ?
+		}
+
+		set insert_first_event {
+
+			insert into
+				tGameEventKojolu (current_player_id, waiting_player_id, game_id, time_event)
+			values
+				(?, ?, ?, CURRENT year to second)
+		}
+
+		set get_first_event {
+
+			select first 1
+				event_id, 
+				current_player_id, 
+				waiting_player_id				
+			from 
+				tGameEventKojolu
+			where
+				game_id = ?
+		}
+
+		set stmt [inf_prep_sql $DB $check_empty_events]
+		set rs   [inf_exec_stmt $stmt $game_id]
+		set rows [db_get_nrows $rs]
+
+		inf_close_stmt $stmt
+		db_close $rs	
+
+		if {$rows == 0} {
+
+			set stmt [inf_prep_sql $DB $get_player_ids]
+			set rs   [inf_exec_stmt $stmt $game_id]
+
+			set p1 [db_get_col $rs 0 player_1_id]
+			set p2 [db_get_col $rs 0 player_2_id]
+
+			inf_close_stmt $stmt
+			db_close $rs	
+
+			set random_number [expr {rand()}]
+
+			# Use a conditional statement to assign current_player_id and waiting_player_id based on the random number
+			if {$random_number < 0.5} {
+				set p1_seed $p1
+				set p2_seed $p2
+			} else {
+				set p1_seed $p2
+				set p2_seed $p1
+			}			
+
+			set stmt [inf_prep_sql $DB $insert_first_event]
+			inf_exec_stmt $stmt $p1_seed $p2_seed $game_id
+			inf_close_stmt $stmt
+
+			set stmt [inf_prep_sql $DB $get_usernames]
+			set rs [inf_exec_stmt $stmt $p1_seed $p2_seed]
+
+			build_json [list "current_player_id" "waiting_player_id" "player_1_username" "player_2_username"] [list "$p1_seed" "$p2_seed" "[db_get_col $rs 0 username]" "[db_get_col $rs 1 username]"]			
+			
+			inf_close_stmt $stmt
+			db_close $rs	
+
+		} else {
+			set stmt [inf_prep_sql $DB $get_first_event]
+			set rs   [inf_exec_stmt $stmt $game_id]
+
+			set p1 [db_get_col $rs 0 current_player_id]
+			set p2 [db_get_col $rs 0 waiting_player_id]
+
+			inf_close_stmt $stmt
+			db_close $rs	
+
+			set stmt [inf_prep_sql $DB $get_usernames]
+			set rs [inf_exec_stmt $stmt $p1 $p2]
+
+			build_json [list "current_player_id" "waiting_player_id" "player_1_username" "player_2_username"] [list "$p1" "$p2" "[db_get_col $rs 0 username]" "[db_get_col $rs 1 username]"]
+
+			inf_close_stmt $stmt
+			db_close $rs	
+		}
+	}
 
 
  	proc go_greedy_pig args {
@@ -789,14 +910,14 @@ namespace eval TRAINING {
 			set game_id [db_get_col $rs 0 player_2_id]
 			tpBindString game_id $game_id
 			puts "GAME HAS BEEN FOUND APPARENTLY [db_get_nrows $rs]" 
-
+			build_json "full" "1"
 			catch {db_close $rs}
 
 		} else {
 			tpSetVar loading 1
 			tpSetVar game_exists 0
 			catch {db_close $rs}
-
+			build_json "full" "0"
 		}
 	}
 
