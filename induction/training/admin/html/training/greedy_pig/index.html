@@ -46,14 +46,17 @@
         <button onclick="go_lobby(event)" id="modal-close-btn">OKAY</button>
       </div>
     </div>
-    <div id="loss-modal">
+    <form id="loss-modal" method="post" action="##TP_CGI_URL##">
+      <input type="hidden" name="action" value="KOJOLU_lobby" />
+      <input id="hidden_username" type="hidden" name="username" value="">
+      <input id="hidden_id" type="hidden" name="userid" value="">
       <div id="loss-modal-content">
         <p id="loss-modal-text">
           Bettter luck next time.
         </p>
-        <button onclick="go_lobby(event)" id="modal-close-btn">OKAY</button>
+        <input type="submit" onclick="go_lobby(event)" id="modal-close-btn" value="OKAY"/>
       </div>
-    </div>
+    </form>
     <script>
     	##TP_PLAY training/greedy_pig/script.js##
     </script>

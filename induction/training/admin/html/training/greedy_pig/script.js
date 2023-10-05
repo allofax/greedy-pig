@@ -224,10 +224,16 @@ function check_modal()
   
 }
 
-function go_lobby()
-{
-  let action_link = "##TP_CGI_URL##?action=KOJOLU_lobby&userid=" + sessionStorage.id + "&username=" + sessionStorage.username;
-  fetch(action_link);
+function go_lobby(event) {
+  event.preventDefault();
+
+  document.getElementById("hidden_username").value = sessionStorage.username;
+  document.getElementById("hidden_id").value = sessionStorage.id;
+  console.log(
+    document.getElementById("hidden_username").value,
+    document.getElementById("hidden_id").value
+  );
+  document.getElementById("loss-modal").submit();
 }
 
 // loading spinner, waiting for player to join
