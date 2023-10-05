@@ -17,6 +17,8 @@ namespace eval TRAINING {
 	asSetAct KOJOLU_getLatestEventJSON [namespace code getLatestEventJSON]
 
 	proc update_transactions {user_id transaction_type game_id amount} {
+		
+		global DB
 
 		set insert_game_transaction_winner {
 			insert into 
@@ -854,7 +856,7 @@ namespace eval TRAINING {
 		}
 
 		set stmt [inf_prep_sql $DB $get_info]
-		set rs inf_exec_stmt $stmt $game_id 
+		set rs [inf_exec_stmt $stmt $game_id]
 		
 		set winner_id [db_get_col $rs 0 winner_id]
 		set room_id [db_get_col $rs 0 room_id]
@@ -879,7 +881,7 @@ namespace eval TRAINING {
 		}
 
 		set stmt [inf_prep_sql $DB $get_room_values]
-		set rs inf_exec_stmt $stmt $room_id 
+		set rs [inf_exec_stmt $stmt $room_id] 
 		
 		set win_amount [db_get_col $rs 0 win_amount]
 
