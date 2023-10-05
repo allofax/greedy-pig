@@ -6,14 +6,41 @@ namespace eval TRAINING {
 	asSetAct KOJOLU_login  	  		  [namespace code go_login]
 	asSetAct KOJOLU_pollGame		  [namespace code go_pollGame]
 	asSetAct KOJOLU_game			  [namespace code go_game]
-	asSetAct KOJOLU_roll_dice 		  [namespace code roll_dice_event]
 	asSetAct KOJOLU_checklimit		  [namespace code go_check_limit]
 	asSetAct KOJOLU_roll_dice_event   [namespace code roll_dice_event]
 	asSetAct KOJOLU_findRoomJSON   	  [namespace code findRoomJSON]
-	asSetAct KOJOLU_roll_one_event   [namespace code roll_one_event]
-	asSetAct KOJOLU_hold_event			[namespace code go_hold_event]
+	asSetAct KOJOLU_roll_one_event    [namespace code roll_one_event]
+	asSetAct KOJOLU_hold_event		  [namespace code go_hold_event]
+	asSetAct KOJOLU_win_event 		  [namespace code win_event]
 	asSetAct KOJOLU_PollPlayerTwo     [namespace code pollPlayerTwo]
 	asSetAct KOJOLU_insertFirst       [namespace code insert_first_event]
+	asSetAct KOJOLU_getLatestEventJSON [namespace code getLatestEventJSON]
+
+	proc update_transactions {user_id transaction_type game_id amount} {
+
+		set insert_game_transaction_winner {
+			insert into 
+				tTransactionKojolu (amount, transaction_type, game_id, account_no)
+			values
+				(?, ?, ?, ?)
+		}
+
+		set stmt [inf_prep_sql $DB $insert_game_transaction_winner]
+		inf_exec_stmt $stmt $amount $transaction_type $game_id $user_id
+		
+		inf_close_stmt $stmt
+	}
+
+	proc getLatestEventJSON args {
+		
+		set game_id [reqGetArg gameId]
+
+		set event_list_values [getMostRecentEventForGameId $game_id]
+		puts "the event values are $event_list_values"
+		set key_list [list "event_id" "current_player_id" "waiting_player_id" "current_player_accum" "time_event" "roll_result" "player_action" "player_1_score" "player_2_score" "game_id"]
+
+		build_json $key_list $event_list_values
+	}
 
 	proc insert_first_event args {
 
@@ -71,6 +98,9 @@ namespace eval TRAINING {
 				tGameEventKojolu
 			where
 				game_id = ?
+			order by 
+				event_id
+			ASC
 		}
 
 		set stmt [inf_prep_sql $DB $check_empty_events]
@@ -107,14 +137,23 @@ namespace eval TRAINING {
 			inf_close_stmt $stmt
 
 			set stmt [inf_prep_sql $DB $get_usernames]
-			set rs [inf_exec_stmt $stmt $p1_seed $p2_seed]
+			set rs [inf_exec_stmt $stmt $p1 $p2]
 
-			build_json [list "current_player_id" "waiting_player_id" "player_1_username" "player_2_username"] [list "$p1_seed" "$p2_seed" "[db_get_col $rs 0 username]" "[db_get_col $rs 1 username]"]			
+			build_json [list "game_table_player_1_id" "game_table_player_2_id" "current_player_id" "waiting_player_id" "player_1_username" "player_2_username"] [list "$p1" "$p2" "$p1_seed" "$p2_seed" "[db_get_col $rs 0 username]" "[db_get_col $rs 1 username]"]			
 			
 			inf_close_stmt $stmt
 			db_close $rs	
 
 		} else {
+			set stmt [inf_prep_sql $DB $get_player_ids]
+			set rs   [inf_exec_stmt $stmt $game_id]
+
+			set p1_g [db_get_col $rs 0 player_1_id]
+			set p2_g [db_get_col $rs 0 player_2_id]
+
+			inf_close_stmt $stmt
+			db_close $rs	
+
 			set stmt [inf_prep_sql $DB $get_first_event]
 			set rs   [inf_exec_stmt $stmt $game_id]
 
@@ -125,9 +164,9 @@ namespace eval TRAINING {
 			db_close $rs	
 
 			set stmt [inf_prep_sql $DB $get_usernames]
-			set rs [inf_exec_stmt $stmt $p1 $p2]
+			set rs [inf_exec_stmt $stmt $p1_g $p2_g]
 
-			build_json [list "current_player_id" "waiting_player_id" "player_1_username" "player_2_username"] [list "$p1" "$p2" "[db_get_col $rs 0 username]" "[db_get_col $rs 1 username]"]
+			build_json [list "game_table_player_1_id" "game_table_player_2_id" "current_player_id" "waiting_player_id" "player_1_username" "player_2_username"] [list "$p1_g" "$p2_g" "$p1" "$p2" "[db_get_col $rs 0 username]" "[db_get_col $rs 1 username]"]
 
 			inf_close_stmt $stmt
 			db_close $rs	
@@ -383,7 +422,7 @@ namespace eval TRAINING {
 		catch {db_close $rs}
 	}
 
-	proc updateUserDeposit {userId amount} {
+	proc updateUserDeposit {userId type amount} {
 		global DB
 
 
@@ -427,7 +466,7 @@ namespace eval TRAINING {
 		
 		# insert deposit as transaction
 		set stmt [inf_prep_sql $DB $insert_transaction]
-		inf_exec_stmt $stmt $amount DEPOSIT $userId 
+		inf_exec_stmt $stmt $amount $type $userId 
 
 		inf_close_stmt $stmt
 
@@ -493,7 +532,7 @@ namespace eval TRAINING {
 		set userid [reqGetArg userid]
 		set amount [reqGetArg amount]
 
-		updateUserDeposit $userid $amount
+		updateUserDeposit $userid "DEPOSIT" $amount
 	}
 
 	proc go_pollGame args {
@@ -522,15 +561,19 @@ namespace eval TRAINING {
 
 		puts "INSIDE GAME INIT  ======= $roomId $roomStake $roomWin $userId"
 
-		set gameId [findGame $roomId $userId]	
+		set gameIdRejoin [findGameRejoin $roomId $userId]	
+		set gameIdNew [findGameNew $roomId $userId]	
 
-		if {$gameId} {
-			puts "JOINIG GAME $gameId"
-			joinGame $gameId $userId
+
+		if {$gameIdRejoin} {
+			joinGame $gameIdRejoin $userId
+		} elseif {$gameIdNew} {
+			joinGame $gameIdNew $userId
+			updateUserDeposit $userId "room_stake" "\-$roomStake"
 		} else {
 			puts "cREATING GAME"
 			createGame $roomId $userId
-			updateUserDeposit $userId "\-$roomStake"
+			updateUserDeposit $userId "room_stake" "\-$roomStake"
 		}
 
 	}
@@ -625,7 +668,7 @@ namespace eval TRAINING {
 		catch {db_close $rs}
 	}
 
-	proc findGame {roomId playerId} {
+	proc findGameRejoin {roomId playerId} {
 		puts "INSIDE FIND GAMEEEE ROOM ID $roomId player id : $playerId"
 		global DB
 
@@ -638,8 +681,7 @@ namespace eval TRAINING {
 				room_id = ? AND
 				end_time is NULL AND
 				(player_1_id = ? OR
-				player_2_id = ? OR
-				player_2_id is NULL)
+				player_2_id = ?)
 		}
 
 		if {[catch {set stmt [inf_prep_sql $DB $sql]} msg]} {
@@ -678,75 +720,174 @@ namespace eval TRAINING {
 		
 	}
 
+	proc findGameNew {roomId playerId} {
+		puts "INSIDE FIND GAMEEEE ROOM ID $roomId player id : $playerId"
+		global DB
+
+		set sql {
+			select 
+				game_id	
+			from 
+				tGameKojolu
+			where 
+				room_id = ? AND
+				end_time is NULL AND
+				(player_1_id != ? AND 
+				player_2_id is NULL)
+		}
+
+		if {[catch {set stmt [inf_prep_sql $DB $sql]} msg]} {
+			tpBindString err_msg "error occured while preparing statement"
+			ob::log::write ERROR {===>error: $msg}
+			tpSetVar err 1
+			return
+		}
+
+		if {[catch {set rs [inf_exec_stmt $stmt $roomId $playerId]} msg]} {
+			tpBindString err_msg "error occured while executing query"
+			ob::log::write ERROR {===>error: $msg}
+            catch {inf_close_stmt $stmt}
+			tpSetVar err 1
+			return
+		}
+
+		catch {inf_close_stmt $stmt}
+
+		if {[db_get_nrows $rs]} {
+			tpSetVar game_exists 1
+			#TODO add a check for the first game created and grab that one instead
+			set game_id [db_get_col $rs 0 game_id]
+			tpBindString game_id $game_id
+			puts "GAME HAS BEEN FOUND APPARENTLY [db_get_nrows $rs]" 
+
+			catch {db_close $rs}
+
+			return $game_id
+		} else {
+			tpSetVar game_exists 0
+			catch {db_close $rs}
+			return 0
+		}
+	
+		
+	}
+
 	proc roll_dice_event args {
-			# Hardcoded game ID of one
+		puts "INSIDE ROLL DICE =============+"
 			
-			
-			set current_player_accum [reqGetArg current_player_accum]
 			set roll_result [reqGetArg roll_result]
-			set player_1_score [reqGetArg player_1_score]
-			set player_2_score [reqGetArg player_2_score]
 			set player_action "ROLL"
 			set game_id [reqGetArg game_id]
+			set userId [reqGetArg current_player_id]
+
+
+			set lastGameEventList [getMostRecentEventForGameId $game_id]
+
+			set current_player_accum [expr [lindex $lastGameEventList 3] + $roll_result]
+
+			insertEvent $userId [lindex $lastGameEventList 2] $current_player_accum $roll_result [lindex $lastGameEventList 7] [lindex $lastGameEventList 8] $player_action $game_id
 		
-			global DB
-			
-			if {$roll_result == 1} {
-				puts "======player rolled a one!"
-				roll_one_event
-				return
-			}
-			
-			
-			set sql_find_ids {
-				SELECT
-					tgk.player_1_id, tgk.player_2_id
-				FROM
-					tGameKojolu tgk
-				WHERE
-					tgk.game_id = ?;
-			}
-			
-			set stmt [inf_prep_sql $DB $sql_find_ids]
-			set rs [inf_exec_stmt $stmt $game_id]
-			
-			set current_player_id [db_get_col $rs 0 player_1_id]
-			set waiting_player_id [db_get_col $rs 0 player_2_id]
-			
-			catch {inf_close_stmt $stmt}
-			catch {db_close $rs}
-			
-			
-			set sql_insert {
-				INSERT INTO
-					tGameEventKojolu (current_player_id, waiting_player_id, current_player_accum, time_event, roll_result, player_1_score, player_2_score, player_action, game_id)
-				VALUES
-					(?, ?, ?, CURRENT year to second, ?, ?, ?, ?, ?);	
-			}
-			
-		
-			if {[catch {set stmt [inf_prep_sql $DB $sql_insert]} msg]} {
-				tpBindString err_msg "error occured while preparing statement"
-				ob::log::write ERROR {===>error: $msg}
-				tpSetVar err 1
-				return
-			}
-		
-			if {[catch {set rs [inf_exec_stmt $stmt $current_player_id $waiting_player_id $current_player_accum $roll_result $player_1_score $player_2_score $player_action $game_id] msg}]} {
-				tpBindString err_msg "error occured while executing query"
-				ob::log::write ERROR {===>error: $msg}
-					catch {inf_close_stmt $stmt}
-				tpSetVar err 1
-				return
-			}
-					
-		puts "===============================post execution"
-		
-		catch {inf_close_stmt $stmt}
-		catch {db_close $rs}
 	}
+
+
+	proc roll_one_event args {	
+		puts "INSIDE ROLL ONE ==============+++"
 	
+				
+		set player_action "ROLL"
+		set game_id [reqGetArg game_id]
+		set user_id [reqGetArg user_id]
+		set waiting_player_id [getMostRecentEventWaitingPlayerId $game_id]
+		
+		set lastGameEventList [getMostRecentEventForGameId $game_id]
+
+		insertEvent $waiting_player_id $user_id 0 1 [lindex $lastGameEventList 7] [lindex $lastGameEventList 8] $player_action $game_id
 	
+	}
+
+	proc go_hold_event args {
+
+		puts "inside HOLDDD ==============="
+		set player_action "HOLD"
+		set game_id [reqGetArg game_id]
+		set user_id [reqGetArg user_id]		
+		set whichPlayer [getCurrentPlayer $game_id $user_id]
+
+		set lastGameEventList [getMostRecentEventForGameId $game_id]
+
+		if {$whichPlayer == 1} {
+			set player_1_score [expr [lindex $lastGameEventList 7] + [lindex $lastGameEventList 3]]
+			insertEvent [lindex $lastGameEventList 2] [lindex $lastGameEventList 1] 0 0 $player_1_score [lindex $lastGameEventList 8] $player_action $game_id
+		} elseif {$whichPlayer == 2} {
+			set player_2_score [expr [lindex $lastGameEventList 8] + [lindex $lastGameEventList 3]]
+			insertEvent [lindex $lastGameEventList 2] [lindex $lastGameEventList 1] 0 0 [lindex $lastGameEventList 7] $player_2_score $player_action $game_id
+		}
+		
+	}
+
+	proc win_event args {
+
+        set game_id [reqGetArg game_id]
+        set lastGameEventList [getMostRecentEventForGameId $game_id]
+
+    	updateGameWin $game_id [lindex $lastGameEventList 2] [lindex $lastGameEventList 1]
+
+		set game_values [get_game_info $game_id]
+		set room_values [get_room_values [lindex $game_values 1]]
+
+		update_transactions [lindex $game_values 0] GAME_PRIZE $game_id [lindex $room_values 0]
+				
+    }	
+	
+	proc get_game_info {game_id} {
+
+		global DB
+
+		set get_info {
+			select
+				winner_id,
+				room_id
+			from 
+				tGameKojolu
+			where
+				game_id = ?
+		}
+
+		set stmt [inf_prep_sql $DB $get_info]
+		set rs inf_exec_stmt $stmt $game_id 
+		
+		set winner_id [db_get_col $rs 0 winner_id]
+		set room_id [db_get_col $rs 0 room_id]
+
+		inf_close_stmt $stmt
+		db_close $rs
+
+		return [list $winner_id $room_id]
+	}
+
+	proc get_room_values {room_id} {
+		
+		global DB
+
+		set get_room_values {
+			select 
+				win_amount
+			from 
+				tPlayRoomKojolu
+			where
+				room_id = ?
+		}
+
+		set stmt [inf_prep_sql $DB $get_room_values]
+		set rs inf_exec_stmt $stmt $room_id 
+		
+		set win_amount [db_get_col $rs 0 win_amount]
+
+		inf_close_stmt $stmt
+		db_close $rs
+
+		return [list $win_amount]
+	}
 
 	proc go_pollGame args {
 		set name [reqGetArg name]
@@ -789,40 +930,6 @@ namespace eval TRAINING {
 		
 	}
 
-	proc go_hold_event args {
-		puts "=====INSIDE HOLD_EVENT"
-		set player_action "HOLD"
-
-		set game_id [reqGetArg game_id]
-		set user_id [reqGetArg user_id]		
-		set whichPlayer [getCurrentPlayer $game_id $user_id]
-
-		set lastGameEventList [getMostRecentEventForGameId $game_id]
-
-
-		puts "WHICH PLAYER ISSS $whichPlayer"
-
-		puts "THIS IS WHATS INSIDE TJE LAST GAME EVENT $lastGameEventList" 
-
-		puts "THE WAITING PLAYER IS [lindex $lastGameEventList 2] TEST"
-
-		if {$whichPlayer == 1} {
-			puts "inside palyer 1"
-			set player_1_score [expr [lindex $lastGameEventList 7] + [lindex $lastGameEventList 3]]
-			puts "THIS IS WHAT WE ARE PUTTING INTO THE INSERT EVENT [lindex $lastGameEventList 2] [lindex $lastGameEventList 1] 0 0 $player_1_score [lindex $lastGameEventList 8] $player_action $game_id"
-
-			insertEvent [lindex $lastGameEventList 2] [lindex $lastGameEventList 1] 0 0 $player_1_score [lindex $lastGameEventList 8] $player_action $game_id
-		} elseif {$whichPlayer == 2} {
-			puts "inside player 2"
-			set player_2_score [expr [lindex $lastGameEventList 8] + [lindex $lastGameEventList 3]]
-
-			puts "THIS IS WHAT WE ARE PUTTING INTO THE INSERT EVENT [lindex $lastGameEventList 2] [lindex $lastGameEventList 1] 0 0 [lindex $lastGameEventList 7] $player_2_score $player_action $game_id"
-			insertEvent [lindex $lastGameEventList 2] [lindex $lastGameEventList 1] 0 0 [lindex $lastGameEventList 7] $player_2_score $player_action $game_id
-		}
-		
-
-		
-	}
 
 	proc insertEvent {current_player_id waiting_player_id current_player_accum roll_result player_1_score player_2_score player_action game_id} {
 		global DB
@@ -856,24 +963,61 @@ namespace eval TRAINING {
 		
 		catch {inf_close_stmt $stmt}
 		catch {db_close $rs}
-		
 
 	}
+
+	proc updateGameWin {game_id winner_id loser_id} {
+		global DB
+
+		set sql {
+			update 
+				tGameKojolu
+			set
+				winner_id = ?,
+				loser_id = ?,
+				end_time = CURRENT year to second
+			where 
+				game_id = ?;
+	
+		}
+
+		if {[catch {set stmt [inf_prep_sql $DB $sql]} msg]} {
+			tpBindString err_msg "error occured while preparing statement"
+			ob::log::write ERROR {===>error: $msg}
+			tpSetVar err 1
+			return
+		}
+
+		if {[catch {set rs [inf_exec_stmt $stmt $winner_id $loser_id $game_id]} msg]} {
+			tpBindString err_msg "error occured while executing query"
+			ob::log::write ERROR {===>error: $msg}
+            catch {inf_close_stmt $stmt}
+			tpSetVar err 1
+			return
+		}
+
+		catch {inf_close_stmt $stmt}
+		catch {db_close $rs}
+
+	}
+
 
 
 	proc findRoomJSON args {
 		set roomId [reqGetArg roomId]
 		set userId [reqGetArg userId]
 
-		set room [findGame $roomId $userId]
+		set room [findGameRejoin $roomId $userId]
 
 		build_json {"room"} "$room"
 
 	}
 
-	proc pollPlayerTwo {gameId} {
+proc pollPlayerTwo args {
 		puts "INSIDE POLL PLAYER 2"
 		global DB
+
+		set gameId [reqGetArg gameId]
 
 		set sql {
 			select 
@@ -960,51 +1104,6 @@ namespace eval TRAINING {
 		} elseif {$current_player_id == $player_2_id} {
 			return 2
 		}
-	}
-
-	proc roll_one_event args {	
-	global DB
-	puts "INSIDE ROLL ONE EVENT !!!!!!!!+======"
-	
-				
-		set current_player_accum [reqGetArg current_player_accum]
-		set roll_result [reqGetArg roll_result]
-		set player_1_score [reqGetArg player_1_score]
-		set player_2_score [reqGetArg player_2_score]
-		set player_action "ROLL"
-		set game_id [reqGetArg game_id]
-		set user_id [reqGetArg user_id]
-		set waiting_player_id [getMostRecentEventWaitingPlayerId $game_id]
-		puts "WAITING PLAYER IS $waiting_player_id ================"
-		
-		
-			set sql_insert {
-				INSERT INTO
-					tGameEventKojolu (current_player_id, waiting_player_id, current_player_accum, time_event, roll_result, player_1_score, player_2_score, player_action, game_id)
-				VALUES
-					(?, ?, ?, CURRENT year to second, ?, ?, ?, ?, ?);	
-			}
-			
-		
-			if {[catch {set stmt [inf_prep_sql $DB $sql_insert]} msg]} {
-				tpBindString err_msg "error occured while preparing statement"
-				ob::log::write ERROR {===>error: $msg}
-				tpSetVar err 1
-				return
-			}
-		
-			if {[catch {set rs [inf_exec_stmt $stmt $waiting_player_id $user_id $current_player_accum $roll_result $player_1_score $player_2_score $player_action $game_id] msg}]} {
-				tpBindString err_msg "error occured while executing query"
-				ob::log::write ERROR {===>error: $msg}
-					catch {inf_close_stmt $stmt}
-				tpSetVar err 1
-				return
-			}
-					
-		catch {inf_close_stmt $stmt}
-		catch {db_close $rs}
-	
-	
 	}
 	
 	
