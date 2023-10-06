@@ -16,6 +16,20 @@ namespace eval TRAINING {
 	asSetAct KOJOLU_insertFirst       [namespace code insert_first_event]
 	asSetAct KOJOLU_getLatestEventJSON [namespace code getLatestEventJSON]
 
+	proc win_event args {
+
+        set game_id [reqGetArg game_id]
+        set lastGameEventList [getMostRecentEventForGameId $game_id]
+
+    	updateGameWin $game_id [lindex $lastGameEventList 2] [lindex $lastGameEventList 1]
+
+		set game_values [get_game_info $game_id]
+		set room_values [get_room_values [lindex $game_values 1]]
+
+		update_winner_balance [lindex $game_values 0] [lindex $room_values 0]	
+		update_transactions [lindex $game_values 0] GAME_PRIZE $game_id [lindex $room_values 0]
+    }	
+
 	proc update_transactions {user_id transaction_type game_id amount} {
 		
 		global DB
@@ -31,6 +45,76 @@ namespace eval TRAINING {
 		inf_exec_stmt $stmt $amount $transaction_type $game_id $user_id
 		
 		inf_close_stmt $stmt
+
+	}
+
+	proc update_winner_balance {winner_id amount} {
+
+		global DB
+
+		set sql {
+			update 
+				tAccountKojolu
+			set
+				balance = balance + ?
+			where 
+				user_id = ?
+		}
+
+		set stmt [inf_prep_sql $DB $sql]
+		inf_exec_stmt $stmt $amount $winner_id 
+		
+		inf_close_stmt $stmt
+	}
+
+	proc get_game_info {game_id} {
+
+		global DB
+
+		set get_info {
+			select
+				winner_id,
+				room_id
+			from 
+				tGameKojolu
+			where
+				game_id = ?
+		}
+
+		set stmt [inf_prep_sql $DB $get_info]
+		set rs [inf_exec_stmt $stmt $game_id]
+		
+		set winner_id [db_get_col $rs 0 winner_id]
+		set room_id [db_get_col $rs 0 room_id]
+
+		inf_close_stmt $stmt
+		db_close $rs
+
+		return [list $winner_id $room_id]
+	}
+
+	proc get_room_values {room_id} {
+		
+		global DB
+
+		set get_room_values {
+			select 
+				win_amount
+			from 
+				tPlayRoomKojolu
+			where
+				room_id = ?
+		}
+
+		set stmt [inf_prep_sql $DB $get_room_values]
+		set rs [inf_exec_stmt $stmt $room_id] 
+		
+		set win_amount [db_get_col $rs 0 win_amount]
+
+		inf_close_stmt $stmt
+		db_close $rs
+
+		return [list $win_amount]
 	}
 
 	proc getLatestEventJSON args {
@@ -416,6 +500,7 @@ namespace eval TRAINING {
 		catch {inf_close_stmt $stmt}
 
 		if {[db_get_nrows $rs]} {
+
 			tpSetVar found_balance 1
 			tpBindString balance [db_get_col $rs 0 balance]
 			tpBindString remaining_limit [db_get_col $rs 0 remaining_limit]
@@ -825,70 +910,6 @@ namespace eval TRAINING {
 			insertEvent [lindex $lastGameEventList 2] [lindex $lastGameEventList 1] 0 0 [lindex $lastGameEventList 7] $player_2_score $player_action $game_id
 		}
 		
-	}
-
-	proc win_event args {
-
-        set game_id [reqGetArg game_id]
-        set lastGameEventList [getMostRecentEventForGameId $game_id]
-
-    	updateGameWin $game_id [lindex $lastGameEventList 2] [lindex $lastGameEventList 1]
-
-		set game_values [get_game_info $game_id]
-		set room_values [get_room_values [lindex $game_values 1]]
-
-		update_transactions [lindex $game_values 0] GAME_PRIZE $game_id [lindex $room_values 0]
-				
-    }	
-	
-	proc get_game_info {game_id} {
-
-		global DB
-
-		set get_info {
-			select
-				winner_id,
-				room_id
-			from 
-				tGameKojolu
-			where
-				game_id = ?
-		}
-
-		set stmt [inf_prep_sql $DB $get_info]
-		set rs [inf_exec_stmt $stmt $game_id]
-		
-		set winner_id [db_get_col $rs 0 winner_id]
-		set room_id [db_get_col $rs 0 room_id]
-
-		inf_close_stmt $stmt
-		db_close $rs
-
-		return [list $winner_id $room_id]
-	}
-
-	proc get_room_values {room_id} {
-		
-		global DB
-
-		set get_room_values {
-			select 
-				win_amount
-			from 
-				tPlayRoomKojolu
-			where
-				room_id = ?
-		}
-
-		set stmt [inf_prep_sql $DB $get_room_values]
-		set rs [inf_exec_stmt $stmt $room_id] 
-		
-		set win_amount [db_get_col $rs 0 win_amount]
-
-		inf_close_stmt $stmt
-		db_close $rs
-
-		return [list $win_amount]
 	}
 
 	proc go_pollGame args {
