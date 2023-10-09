@@ -13,7 +13,6 @@ const btnLobby = document.getElementById("join-btn")
 let userid = document.getElementById("userId")
 var error_text = document.getElementById("invalid-funds")
 
-
 // When the user clicks on the button, open the modal
 btn.onclick = function () {
 

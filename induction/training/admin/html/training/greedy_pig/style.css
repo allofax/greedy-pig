@@ -589,3 +589,11 @@ main {
       opacity: 1;
   }
 }
+
+#session {
+  display: flex;
+  align-self: flex-end;
+  color: #39ef91;
+  font-size: 2.5em;
+  position: absolute;
+}
