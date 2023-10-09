@@ -434,18 +434,23 @@ namespace eval TRAINING {
 
 	}
 
+
+
 	proc lobby args {
 		
 		set userid [reqGetArg userid]
 		set username [reqGetArg username]
+<<<<<<< HEAD
 
 		getRoom $userid
 
 
+=======
+		set balance_threshold [getUserAccount $userid]
+>>>>>>> be9915e (addind grey out button and description)
 		tpBindString username $username
 		tpBindString userid $userid
-
-		getUserAccount $userid
+		getRoom $balance_threshold
   		asPlayFile -nocache training/greedy_pig/lobby.html
 		
 	}
@@ -614,12 +619,19 @@ namespace eval TRAINING {
 			tpSetVar found_balance 1
 			tpBindString balance [db_get_col $rs 0 balance]
 			tpBindString remaining_limit [db_get_col $rs 0 remaining_limit]
+			set balance_threshold [db_get_col $rs 0 balance]
 
 		}
 		catch {db_close $rs}
+		return $balance_threshold
+
 	}
 
+<<<<<<< HEAD
 	proc getRoom {user_id} {
+=======
+	proc getRoom {balance_threshold} {
+>>>>>>> be9915e (addind grey out button and description)
 
 		global DB ROOM
 
@@ -659,6 +671,16 @@ namespace eval TRAINING {
 		tpSetVar rooms $amountRows 
 
 		for {set i 0} {$i < $amountRows} {incr i} {
+
+
+			# if the room stake is greater than the user's balance...
+			if {[db_get_col $rs $i stake_amount] > $balance_threshold} {
+				# ...set a var to indicate that this user can't join the room
+				tpSetVar stake_above_threshold 1
+			} else {
+				# otherwise set a var to indicate that they can join
+				tpSetVar stake_above_threshold 0
+			}
 
 			set ROOM($i,room_id) [db_get_col $rs $i room_id]
 			set ROOM($i,stake_amount) [db_get_col $rs $i stake_amount]

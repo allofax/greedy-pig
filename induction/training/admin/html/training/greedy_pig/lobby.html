@@ -34,11 +34,18 @@
     <p id="lobby-text" >STAKE: £##TP_ROOM_STAKE##</p>
     <p id="lobby-text" >PRIZE: £##TP_ROOM_WIN##</p>
 
+<<<<<<< HEAD
       <div id="session">
         <p>##TP_ROOM_SESSION##</p>  
       </div>
 
+=======
+    ##TP_IF {[tpGetVar stake_above_threshold] == 0} ##
+>>>>>>> be9915e (addind grey out button and description)
     <button type="submit" onclick="checkBalance(event, ##TP_ROOM_ID##, ##TP_userid##, ##TP_balance##, ##TP_ROOM_STAKE##)" id="join-btn">JOIN</button>
+    ##TP_ELSEIF {[tpGetVar stake_above_threshold] == 1}##
+    <button type="button" onclick="alert("blah")" id="funds-too-low-btn">FUNDS TOO LOW!</button>
+
     </div>
 
     </div>
