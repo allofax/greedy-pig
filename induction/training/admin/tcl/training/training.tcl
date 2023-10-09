@@ -439,7 +439,8 @@ namespace eval TRAINING {
 		set userid [reqGetArg userid]
 		set username [reqGetArg username]
 
-		getRoom
+		getRoom $userid
+
 
 		tpBindString username $username
 		tpBindString userid $userid
@@ -618,7 +619,7 @@ namespace eval TRAINING {
 		catch {db_close $rs}
 	}
 
-	proc getRoom {} {
+	proc getRoom {user_id} {
 
 		global DB ROOM
 
@@ -663,12 +664,19 @@ namespace eval TRAINING {
 			set ROOM($i,stake_amount) [db_get_col $rs $i stake_amount]
 			set ROOM($i,win_amount) [db_get_col $rs $i win_amount]
 
+			if {[findGameRejoin [db_get_col $rs $i room_id] $user_id] != 0} {
+				set ROOM($i,in_session) "YOU HAVE A GAME IN PROGRESS"
+			} else {
+				set ROOM($i,in_session) ""
+			}
+
 		}
 
-		tpBindVar ROOM_ID ROOM room_id room_idx
-		tpBindVar ROOM_STAKE ROOM stake_amount room_idx
-		tpBindVar ROOM_WIN 	 ROOM win_amount   room_idx
-	
+		tpBindVar ROOM_ID 	 	ROOM room_id 	  room_idx
+		tpBindVar ROOM_STAKE 	ROOM stake_amount room_idx
+		tpBindVar ROOM_WIN 	 	ROOM win_amount   room_idx
+		tpBindVar ROOM_SESSION 	ROOM in_session   room_idx
+
 		catch {db_close $rs}
 
 	}
