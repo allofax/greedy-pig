@@ -440,17 +440,10 @@ namespace eval TRAINING {
 		
 		set userid [reqGetArg userid]
 		set username [reqGetArg username]
-<<<<<<< HEAD
-
-		getRoom $userid
-
-
-=======
 		set balance_threshold [getUserAccount $userid]
->>>>>>> be9915e (addind grey out button and description)
 		tpBindString username $username
 		tpBindString userid $userid
-		getRoom $balance_threshold
+		getRoom $balance_threshold $userid
   		asPlayFile -nocache training/greedy_pig/lobby.html
 		
 	}
@@ -627,11 +620,7 @@ namespace eval TRAINING {
 
 	}
 
-<<<<<<< HEAD
-	proc getRoom {user_id} {
-=======
-	proc getRoom {balance_threshold} {
->>>>>>> be9915e (addind grey out button and description)
+	proc getRoom {balance_threshold user_id} {
 
 		global DB ROOM
 
