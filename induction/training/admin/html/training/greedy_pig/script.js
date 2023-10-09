@@ -15,7 +15,9 @@ const diceEl = document.querySelector('.dice');
 const btnRoll = document.querySelector('.btn--roll');
 const btnHold = document.querySelector('.btn--hold');
 const btnLeave = document.querySelector('.btn--leave');
- 
+const your_turn = document.getElementById('your-turn')
+const opp_turn = document.getElementById('opponents-turn')
+
 // Starting conditions
 let scores, currentScore, activePlayer, playing, userId, game_id, res, last_event_id;
 window.onload = async (event) => {
@@ -121,10 +123,19 @@ const init = function () {
   }
 
   if (parseInt(res.current_player_id) === parseInt(sessionStorage.id)) {
+    
+    your_turn.style.display = "block"
+    opp_turn.style.display = "none"
+
     btnRoll.disabled = false
     btnRoll.style.background = "white"
     btnHold.disabled = false
     btnHold.style.background = "white"
+  }
+  else
+  {
+    opp_turn.style.display = "block"
+    your_turn.style.display = "none"
   }
   
 

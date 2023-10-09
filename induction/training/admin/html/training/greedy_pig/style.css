@@ -11,7 +11,7 @@ html {
   box-sizing: border-box;
 }
 
-body {
+body, #game {
   font-family: "Nunito", sans-serif;
   font-weight: 400;
   height: 100vh;
@@ -20,6 +20,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+#game{
+  display: flex;
+  flex-direction: column;
 }
 
 /* LAYOUT */
@@ -546,5 +551,41 @@ main {
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes lds-dual-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+#your-turn, #opponents-turn {
+    position: relative;
+    font-weight: bolder;
+    font-size: 8rem;
+    opacity: 0; 
+    animation: fadeIn 1s ease-in-out forwards; 
+    display: none;
+}
+
+#your-turn {
+  color: #39ef91;
+
+}
+
+#opponents-turn{
+  color: #db5656;
+}
+
+@keyframes fadeIn {
+  from {
+      opacity: 0;
+  }
+  to {
+      opacity: 1;
   }
 }
