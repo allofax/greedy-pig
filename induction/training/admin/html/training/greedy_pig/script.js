@@ -148,51 +148,61 @@ const switchPlayer = function () {
 };
  
 // Rolling dice functionality
-
 btnLeave.addEventListener('click', function () {
+  console.log("leave button clicked!");
+  // userID and balance missing when the user leaves the game
+  sessionStorage.id = userId;
+  sessionStorage.username = username;
   let action_link = "##TP_CGI_URL##?action=KOJOLU_lobby";
   fetch(action_link);
 });
 
- 
-btnRoll.addEventListener('click', function () {
 
-  if (playing) {
+btnRoll.addEventListener('click', async function () {
+
+
+  if (playing) {  
+    
     const dice = Math.trunc(Math.random() * 6) + 1;
+    
 
 	 if (dice !== 1) {
       currentScore += dice;
       document.getElementById(`current--${activePlayer}`).textContent = currentScore;
       let action_link = "##TP_CGI_URL##?action=KOJOLU_roll_dice_event&current_player_id=" + userId + "&roll_result=" + dice + "&game_id=" + game_id;
-      fetch(action_link);    
+      await fetch(action_link);    
     }
 
     diceEl.classList.remove('hidden');
     diceEl.src = `http://dev02.openbet/user_static/kpietrzy/office_static//images/dice-${dice}.png`;
     
     if (dice == 1) {
-    let action_link = "##TP_CGI_URL##?action=KOJOLU_roll_one_event&user_id=" + userId + "&game_id=" + game_id;
-    fetch(action_link); 
     switchPlayer();
+
+    let action_link = "##TP_CGI_URL##?action=KOJOLU_roll_one_event&user_id=" + userId + "&game_id=" + game_id;
+    await fetch(action_link); 
     }
+
   }
+
 });
  
-btnHold.addEventListener('click', function () {
+btnHold.addEventListener('click', async function () {
   if (playing) {
+
     // add hold_event command to backend before doing everything else   
-    let action_link = "##TP_CGI_URL##?action=KOJOLU_hold_event&user_id=" + userId + "&game_id=" + game_id;
-    fetch(action_link);
+
     
     // 1. Add current score to active player's
     scores[activePlayer] += currentScore;
     document.getElementById(`score--${activePlayer}`).textContent = 
-      scores[activePlayer];
+    scores[activePlayer];
     // 2. Check if players score is >= 100
+    let action_link = "##TP_CGI_URL##?action=KOJOLU_hold_event&user_id=" + userId + "&game_id=" + game_id;
+    await fetch(action_link);
     if (scores[activePlayer] >= 100) {
       
-      let action_link = "##TP_CGI_URL##?action=KOJOLU_win_event&user_id=" + userId + "&game_id=" + game_id;
-      fetch(action_link);
+
       
       playing = false;
       diceEl.classList.add('hidden');
@@ -203,6 +213,8 @@ btnHold.addEventListener('click', function () {
         .querySelector(`.player--${activePlayer}`)
         .classList.remove('player--active');
       // 3. Switch player
+      let action_link = "##TP_CGI_URL##?action=KOJOLU_win_event&user_id=" + userId + "&game_id=" + game_id;
+      await fetch(action_link);
     } else switchPlayer();
   }
 });
@@ -214,10 +226,14 @@ function check_modal()
     if (parseInt(sessionStorage.id) == parseInt(res.waiting_player_id))
     {
         win_modal.style.display = "block"
+        let win_aud = new Audio(`http://dev02.openbet/user_static/kpietrzy/office_static//sound_manager/audio/win.mp3`)
+        win_aud.play()
     }
     else
     {
         loss_modal.style.display = "block"
+        let loss_aud = new Audio(`http://dev02.openbet/user_static/kpietrzy/office_static//sound_manager/audio/loss.mp3`)
+        loss_aud.play()
     }
     clearInterval(query_latest_event)
   }
@@ -296,8 +312,12 @@ async function query_last_event()
   })
   
   check_modal()
+
+  console.log(parseInt(sessionStorage.id))
+  console.log(parseInt(res.current_player_id))
   
   if (parseInt(last_event_id) !== parseInt(res.event_id)) {
+      last_event_id = res.event_id
       init()
   }
 

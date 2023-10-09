@@ -32,11 +32,14 @@
       <img src="" alt="Playing dice" class="dice" />
       <button class="btn btn--roll">🎲 Roll dice</button>
       <button class="btn btn--hold">📥 Hold</button>
-      <button class="btn btn--leave">🚪 Leave</button>
+
+      <input type="hidden" name="action" value="KOJOLU_lobby" />
+      <button onclick="go_lobby(event)" class="btn btn--leave">🚪 Leave</button>
+
     </main>
     <div class="loading-spinner__overlay" id = "spinner">
         <div class="lds-dual-ring"></div>
-        <button class="btn btn--leave">🚪 Leave</button>
+        <button onclick="go_lobby(event)" class="btn btn--leave">🚪 Leave</button>
     </div>
     <div id="win-modal">
       <div id="win-modal-content">

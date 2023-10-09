@@ -122,7 +122,7 @@ async function checkBalance (event, roomId, userId, balance, roomStake) {
   }
 }
 
-async function test () {
+async function deposit () {
 
   var inputValue = parseFloat(inputDeposit.value);
 
@@ -135,7 +135,7 @@ async function test () {
   console.log("USER ID ======="+userid);
   let amount = inputDeposit.value
   console.log(amount)
-  let action_link = "##TP_CGI_URL##?action=KOJOLU_deposit&userid=" + userid + "&amount=" + amount;
+  let action_link = "##TP_CGI_URL##?action=KOJOLU_deposit&userid=" + userid + "&amount=" + amount + "&transactionType=DEPOSIT";
   
   await fetch(action_link)
   location.reload();

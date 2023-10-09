@@ -2,7 +2,7 @@ namespace eval TRAINING {
 
 	asSetAct KOJOLU_GreedyPig         [namespace code go_greedy_pig]
 	asSetAct KOJOLU_lobby         	  [namespace code lobby]
-	asSetAct KOJOLU_deposit			  [namespace code deposit]
+	asSetAct KOJOLU_deposit			  [namespace code updateAccount]
 	asSetAct KOJOLU_login  	  		  [namespace code go_login]
 	asSetAct KOJOLU_pollGame		  [namespace code go_pollGame]
 	asSetAct KOJOLU_game			  [namespace code go_game]
@@ -26,30 +26,105 @@ namespace eval TRAINING {
 		set game_values [get_game_info $game_id]
 		set room_values [get_room_values [lindex $game_values 1]]
 
-		update_winner_balance [lindex $game_values 0] [lindex $room_values 0]	
-		update_transactions [lindex $game_values 0] GAME_PRIZE $game_id [lindex $room_values 0]
+		updateAccount [lindex $game_values 0] GAME_PRIZE [lindex $room_values 0] $game_id
+
+
     }	
 
-	proc update_transactions {user_id transaction_type game_id amount} {
-		
+	proc updateAccount {{account_no ""} {transaction_type ""} {amount ""} {game_id ""}} {
+
+		if {[reqGetArg userid] ne ""} {
+			set account_no [reqGetArg userid]
+		}
+		if {[reqGetArg amount] ne ""} {
+			set amount [reqGetArg amount]
+		}
+		if {[reqGetArg transactionType] ne ""} {
+			set transaction_type [reqGetArg transactionType]
+		}
+		updateTransaction $amount $transaction_type $account_no $game_id
+
+		puts "$transaction_type THIS IS TRANSACTION TYPE "
+		puts "[string match "GAME*" $transaction_type] "
+		puts "$account_no $transaction_type $amount $game_id"
+
+
+
+		if {$transaction_type == "DEPOSIT"} {
+			updateDepositAccount $account_no $amount
+		} elseif {[string match "GAME*" $transaction_type]} {
+			updateGameAccount $account_no $amount
+		}
+	}
+
+	proc updateTransaction {amount transaction_type account_no game_id} {
 		global DB
 
-		set insert_game_transaction_winner {
+		set sql {
 			insert into 
 				tTransactionKojolu (amount, transaction_type, game_id, account_no)
 			values
 				(?, ?, ?, ?)
 		}
 
-		set stmt [inf_prep_sql $DB $insert_game_transaction_winner]
-		inf_exec_stmt $stmt $amount $transaction_type $game_id $user_id
-		
-		inf_close_stmt $stmt
+
+		if {[catch {set stmt [inf_prep_sql $DB $sql]} msg]} {
+			tpBindString err_msg "error occured while preparing statement"
+			ob::log::write ERROR {===>error: $msg}
+			tpSetVar err 1
+			return
+		}
+
+		if {[catch {set rs [inf_exec_stmt $stmt $amount $transaction_type $game_id $account_no]} msg]} {
+			tpBindString err_msg "error occured while executing query"
+			ob::log::write ERROR {===>error: $msg}
+            catch {inf_close_stmt $stmt}
+			tpSetVar err 1
+			return
+		}
+
+		catch {inf_close_stmt $stmt}
+		catch {db_close $rs}
+
 
 	}
 
-	proc update_winner_balance {winner_id amount} {
+	proc updateDepositAccount {account_no amount} {
+		global DB
 
+		set sql {
+			update 
+				tAccountKojolu
+			set
+				balance = balance + ?,
+				last_top_up_time = CURRENT year to second,
+				remaining_limit = remaining_limit - ?
+			where 
+				account_no = ?;
+	
+		}
+
+		if {[catch {set stmt [inf_prep_sql $DB $sql]} msg]} {
+			tpBindString err_msg "error occured while preparing statement"
+			ob::log::write ERROR {===>error: $msg}
+			tpSetVar err 1
+			return
+		}
+
+		if {[catch {set rs [inf_exec_stmt $stmt $amount $amount $account_no]} msg]} {
+			tpBindString err_msg "error occured while executing query"
+			ob::log::write ERROR {===>error: $msg}
+            catch {inf_close_stmt $stmt}
+			tpSetVar err 1
+			return
+		}
+
+		catch {inf_close_stmt $stmt}
+		catch {db_close $rs}
+
+	}
+
+		proc updateGameAccount {account_no amount} {
 		global DB
 
 		set sql {
@@ -58,13 +133,28 @@ namespace eval TRAINING {
 			set
 				balance = balance + ?
 			where 
-				user_id = ?
+				account_no = ?;
+	
 		}
 
-		set stmt [inf_prep_sql $DB $sql]
-		inf_exec_stmt $stmt $amount $winner_id 
-		
-		inf_close_stmt $stmt
+		if {[catch {set stmt [inf_prep_sql $DB $sql]} msg]} {
+			tpBindString err_msg "error occured while preparing statement"
+			ob::log::write ERROR {===>error: $msg}
+			tpSetVar err 1
+			return
+		}
+
+		if {[catch {set rs [inf_exec_stmt $stmt $amount $account_no]} msg]} {
+			tpBindString err_msg "error occured while executing query"
+			ob::log::write ERROR {===>error: $msg}
+            catch {inf_close_stmt $stmt}
+			tpSetVar err 1
+			return
+		}
+
+		catch {inf_close_stmt $stmt}
+		catch {db_close $rs}
+
 	}
 
 	proc get_game_info {game_id} {
@@ -435,7 +525,26 @@ namespace eval TRAINING {
 			inf_close_stmt $stmt
 			db_close $rs_users
 
+			#if user exists, increment login_count by 1
+
+			set sql_increment {
+				UPDATE
+					tUserKojolu
+				SET
+					login_count = login_count + 1
+				WHERE
+					user_id = ?
+
+			}
+
+			set stmt [inf_prep_sql $DB $sql_increment]
+			set rs [inf_exec_stmt $stmt $user_id]
+
+			inf_close_stmt $stmt
+			db_close $rs
+
 			build_json {"id" "username"} "$user_id $u_name"
+
 		}
 		
 	}
@@ -509,56 +618,6 @@ namespace eval TRAINING {
 		catch {db_close $rs}
 	}
 
-	proc updateUserDeposit {userId type amount} {
-		global DB
-
-
-		# statment that logs transactions for deposits 
-		set insert_transaction {
-			insert into 
-				tTransactionKojolu (amount, transaction_type, account_no)
-			values
-				(?, ?, ?)
-		}
-
-		set sql {
-			update 
-				tAccountKojolu
-			set
-				balance = balance + ?,
-				last_top_up_time = CURRENT year to second,
-				remaining_limit = remaining_limit - ?
-			where 
-				user_id = ?;
-	
-		}
-
-		if {[catch {set stmt [inf_prep_sql $DB $sql]} msg]} {
-			tpBindString err_msg "error occured while preparing statement"
-			ob::log::write ERROR {===>error: $msg}
-			tpSetVar err 1
-			return
-		}
-
-		if {[catch {set rs [inf_exec_stmt $stmt $amount $amount $userId]} msg]} {
-			tpBindString err_msg "error occured while executing query"
-			ob::log::write ERROR {===>error: $msg}
-            catch {inf_close_stmt $stmt}
-			tpSetVar err 1
-			return
-		}
-
-		catch {inf_close_stmt $stmt}
-		catch {db_close $rs}
-		
-		# insert deposit as transaction
-		set stmt [inf_prep_sql $DB $insert_transaction]
-		inf_exec_stmt $stmt $amount $type $userId 
-
-		inf_close_stmt $stmt
-
-	}
-
 	proc getRoom {} {
 
 		global DB ROOM
@@ -614,14 +673,6 @@ namespace eval TRAINING {
 
 	}
 
-	proc deposit args {
-
-		set userid [reqGetArg userid]
-		set amount [reqGetArg amount]
-
-		updateUserDeposit $userid "DEPOSIT" $amount
-	}
-
 	proc go_pollGame args {
 
 		set name [reqGetArg name]
@@ -656,11 +707,12 @@ namespace eval TRAINING {
 			joinGame $gameIdRejoin $userId
 		} elseif {$gameIdNew} {
 			joinGame $gameIdNew $userId
-			updateUserDeposit $userId "room_stake" "\-$roomStake"
+			updateAccount $userId "GAME_STAKE" "\-$roomStake" $gameIdNew
 		} else {
 			puts "cREATING GAME"
 			createGame $roomId $userId
-			updateUserDeposit $userId "room_stake" "\-$roomStake"
+			puts "$userId GAME_STAKE \-$roomStake"
+			updateAccount $userId "GAME_STAKE" "\-$roomStake" [findGameRejoin $roomId $userId]	
 		}
 
 	}
@@ -1003,6 +1055,7 @@ namespace eval TRAINING {
 				game_id = ?;
 	
 		}
+
 
 		if {[catch {set stmt [inf_prep_sql $DB $sql]} msg]} {
 			tpBindString err_msg "error occured while preparing statement"
