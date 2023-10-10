@@ -211,7 +211,7 @@ main {
   outline: none;
 }
 
-#login-btn,
+.login-btn,
 #join_btn,
 #funds-btn,
 #deposit-btn,
@@ -596,4 +596,12 @@ main {
   color: #39ef91;
   font-size: 2.5em;
   position: absolute;
+}
+
+.button--invisible {
+  pointer-events: none;
+  background: #ccc;
+  color: #979797;
+  border-color: #ccc;
+  cursor: not-allowed;
 }

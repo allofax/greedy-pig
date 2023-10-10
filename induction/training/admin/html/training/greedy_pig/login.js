@@ -1,35 +1,40 @@
 'use strict';
 
 let userid = document.getElementById('userid')
+const usernameEl = document.getElementById('username-input')
+const loginbtn = document.getElementById("login-btn")
+const username_element = document.querySelector("input[name='username']")
+const error_text = document.getElementById("invalid-username")
+
 
 window.onload = (event) => {
     sessionStorage.clear()
 } 
+usernameEl.addEventListener("input", validationHandler)
+usernameEl.addEventListener("blur", validationHandler)
 
+function validationHandler (e) {
+    if (e.target.value === "" || e.target.value.length > 30) {
+    
+        error_text.innerHTML = "Please enter a valid username"
+        error_text.style.display = "block"
+        username_element.style.background = "#db6767";
+        loginbtn.classList.add("button--invisible");
+        loginbtn.disabled = true
+
+    } else {
+        error_text.innerHTML = ""
+        error_text.style.display = ""
+        username_element.style.background = "";
+        loginbtn.classList.remove("button--invisible");
+        loginbtn.disabled = false
+
+    }
+}
 function send_details(event)
 {
-    event.preventDefault()
-    
-    let username_element = document.querySelector("input[name='username']")
     let username = document.querySelector("input[name='username']").value.trim();
-    let error_text = document.getElementById("invalid-username")
 
-    if (username === "")
-    {
-        error_text.innerHTML = "Username cannot be empty"
-        error_text.style.display = "block"
-        username_element.style.background = "#db6767";
-        return
-    }
-    else if (username.length > 30)
-    {
-        error_text.innerHTML = "Username cannot be greater than 30 characters"
-        error_text.style.display = "block"
-        username_element.style.background = "#db6767";
-        return        
-    }
-
-    console.log(username)
     var action_link = "##TP_CGI_URL##?action=KOJOLU_login&username=" + username;
 
      fetch(action_link)
