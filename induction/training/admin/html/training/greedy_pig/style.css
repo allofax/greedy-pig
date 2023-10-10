@@ -211,6 +211,7 @@ main {
   outline: none;
 }
 
+#history-btn,
 .login-btn,
 #join_btn,
 #funds-btn,
@@ -233,6 +234,7 @@ main {
   box-shadow: 0 1.75rem 3.5rem rgba(0, 0, 0, 0.1);
 }
 
+#history-btn,
 #funds-btn,
 #deposit-btn,
 #modal-close-btn {
@@ -244,7 +246,8 @@ main {
   width: 30%;
 }
 
-#login-btn:hover,
+#history-btn:hover,
+.login-btn:hover,
 #join_btn:hover,
 #funds-btn:hover,
 #deposit-btn,
@@ -597,6 +600,32 @@ main {
   font-size: 2.5em;
   position: absolute;
 }
+
+#hist-table {
+    background-color: rgba(255, 255, 255, 0.35);
+    width: 60%;
+    height: auto;
+    align-items: center;
+    color: white;
+    text-align: center;
+    border-radius: 9px;
+    backdrop-filter: blur(200px);
+    filter: blur();
+    box-shadow: 0 3rem 5rem rgba(0, 0, 0, 0.25);
+    padding: 1rem;
+    font-size: 2.5rem;
+}
+
+
+#hist-table td {
+  padding: 0.3rem;
+}
+
+#date-header,
+#result-header {
+  width: 33%;
+}
+
 
 .button--invisible {
   pointer-events: none;

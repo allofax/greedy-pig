@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+      <style>##TP_INCL training/greedy_pig/style.css##</style>
+      <title>History</title>
+    </head>    
+
+    <body>  
+      
+      <div id="container">
+        <div id="bal-funds">
+          <form id="back" action="##TP_CGI_URL##" method="post">
+            <input type="hidden" name="action" value="KOJOLU_lobby" />
+            <input id="hidden_username" type="hidden" name="username" value="">
+            <input id="hidden_id" type="hidden" name="userid" value="">
+            <button onclick="go_lobby(event)" id="history-btn">BACK</button>
+          </form>
+        </div>
+      </div>
+
+      <table id="hist-table">
+          <thead>
+            <tr>
+                <th id="date-header">DATE</th>
+                <th>SCORE</th>
+                <th id="result-header">RESULT</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+          ##TP_LOOP history_idx {[tpGetVar num_games]}##
+          <tr>
+            <td>##TP_HISTORY_DATE##</td>
+            <td>##TP_HISTORY_PLAYER_1_NAME## ##TP_HISTORY_PLAYER_1_SCORE## - ##TP_HISTORY_PLAYER_2_SCORE## ##TP_HISTORY_PLAYER_2_NAME##</td>
+            <td>##TP_HISTORY_RESULT##</td>
+          </tr>
+          ##TP_ENDLOOP## 
+          
+          </tbody>
+
+      </table>
+
+  </body>
+
+  <script>
+    ##TP_PLAY training/greedy_pig/history.js##
+  </script>
+
+</html>

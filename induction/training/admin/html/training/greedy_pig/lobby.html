@@ -9,7 +9,15 @@
   </head>
 
   <div id="container">
-    <p id="welcome-text">WELCOME ##TP_username##</p>
+    <div id="bal-funds">
+      <p id="welcome-text">WELCOME ##TP_username##</p>
+      <form action="##TP_CGI_URL##" method="post">
+        <input type="hidden" id="user_id" name="user_id" value=##TP_userid## />
+        <input type="hidden" name="action" value="KOJOLU_history" />
+        <button type="submit" id="history-btn">GAME HISTORY</button>
+      </form>
+
+    </div>
     <div id="bal-funds">
       <p id="balance-text">Balance: £##TP_balance##</p>
       <button id="funds-btn">ADD FUNDS</button>
