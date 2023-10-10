@@ -16,11 +16,18 @@ function send_details(event)
 
     if (username === "")
     {
+        error_text.innerHTML = "Username cannot be empty"
         error_text.style.display = "block"
         username_element.style.background = "#db6767";
         return
     }
-
+    else if (username.length > 30)
+    {
+        error_text.innerHTML = "Username cannot be greater than 30 characters"
+        error_text.style.display = "block"
+        username_element.style.background = "#db6767";
+        return        
+    }
 
     console.log(username)
     var action_link = "##TP_CGI_URL##?action=KOJOLU_login&username=" + username;
