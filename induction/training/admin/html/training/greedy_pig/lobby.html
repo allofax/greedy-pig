@@ -28,6 +28,7 @@
     <input type="hidden" id="roomId" name="roomId" value=##TP_ROOM_ID## />
     <input type="hidden" id="roomStake" name="roomStake" value=##TP_ROOM_STAKE## />
     <input type="hidden" name="roomWin" value=##TP_ROOM_WIN## />
+    <input type="hidden" name="session_text" value=##TP_ROOM_SESSION## />
     <div class="room-box">
     <div class="player player--1" id="lobby-box">
     <p id="lobby-text" >ROOM: ##TP_ROOM_ID##</p>
@@ -38,10 +39,8 @@
         <p>##TP_ROOM_SESSION##</p>  
       </div>
 
-    ##TP_IF {[tpGetVar stake_above_threshold] == 0} ##
-    <button type="submit" onclick="checkBalance(event, ##TP_ROOM_ID##, ##TP_userid##, ##TP_balance##, ##TP_ROOM_STAKE##)" id="join-btn">JOIN</button>
-    ##TP_ELSEIF {[tpGetVar stake_above_threshold] == 1}##
-    <button type="button" onclick="alert("blah")" id="funds-too-low-btn">FUNDS TOO LOW!</button>
+    <button type="submit" name="join_btn" onclick="checkBalance(event, ##TP_ROOM_ID##, ##TP_userid##, ##TP_balance##, ##TP_ROOM_STAKE##)" id="join_btn">##TP_ROOM_AVAILABLE##</button>
+
 
     </div>
 

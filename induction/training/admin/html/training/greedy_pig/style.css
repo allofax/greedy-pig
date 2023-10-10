@@ -212,7 +212,7 @@ main {
 }
 
 #login-btn,
-#join-btn,
+#join_btn,
 #funds-btn,
 #deposit-btn,
 #modal-close-btn {
@@ -239,13 +239,13 @@ main {
   margin: 0%;
 }
 
-#join-btn,
+#join_btn,
 #modal-close-btn {
   width: 30%;
 }
 
 #login-btn:hover,
-#join-btn:hover,
+#join_btn:hover,
 #funds-btn:hover,
 #deposit-btn,
 #modal-close-btn:hover {

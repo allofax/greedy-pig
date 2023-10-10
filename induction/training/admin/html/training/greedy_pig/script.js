@@ -24,15 +24,20 @@ window.onload = async (event) => {
 
   userId = sessionStorage.id
   let action_link = "##TP_CGI_URL##?action=KOJOLU_findRoomJSON&roomId=" + ##TP_roomIdPlayer## + "&userId=" + userId;
-  await fetch(action_link)
-  .then(data => data.text())
-  .then(result => {
-    let gameId = JSON.parse(result).room
-    sessionStorage.setItem("gameId", gameId)
-
-  })
+  try {
+    await fetch(action_link)
+    .then(data => data.text())
+    .then(result => {
+      let gameId = JSON.parse(result).room
+      sessionStorage.setItem("gameId", gameId)
+  
+    })
+  }
+  catch (error) {
+  }
 
   let action_link_ = `##TP_CGI_URL##?action=KOJOLU_insertFirst&gameId=${sessionStorage.gameId}`
+  try {
   await fetch(action_link_)
   .then(response => response.text())
   .then(data => { 
@@ -46,14 +51,21 @@ window.onload = async (event) => {
     sessionStorage.setItem("player_2_username", results.player_2_username)    
 
   })
+}  
+ catch (error) {
+}
 
   let action_link_last = `##TP_CGI_URL##?action=KOJOLU_getLatestEventJSON&gameId=${sessionStorage.gameId}`
+  try{
   await fetch(action_link_last)
   .then(data => data.text())
   .then(result => {
     res = JSON.parse(result)
     last_event_id = res.event_id
   })
+}
+catch (error) {
+}
 
 init();
 
@@ -90,8 +102,7 @@ const init = function () {
   scores = [parseInt(res.player_1_score), parseInt(res.player_2_score)];
   game_id = sessionStorage.gameId
   
-  name0El.textContent = sessionStorage.player_1_username
-  name1El.textContent = sessionStorage.player_2_username
+
 
   btnRoll.disabled = true
   btnRoll.style.background = "#ccc"
@@ -101,8 +112,6 @@ const init = function () {
   score0El.textContent = res.player_1_score;
   score1El.textContent = res.player_2_score;
 
-  console.log(res.current_player_id)
-  console.log(sessionStorage.game_table_player_1_id)
 
   if (parseInt(res.current_player_id) === parseInt(sessionStorage.game_table_player_1_id)) {
     
@@ -160,7 +169,6 @@ const switchPlayer = function () {
  
 // Rolling dice functionality
 btnLeave.addEventListener('click', function () {
-  console.log("leave button clicked!");
   // userID and balance missing when the user leaves the game
   sessionStorage.id = userId;
   sessionStorage.username = username;
@@ -256,23 +264,19 @@ function go_lobby(event) {
 
   document.getElementById("hidden_username").value = sessionStorage.username;
   document.getElementById("hidden_id").value = sessionStorage.id;
-  console.log(
-    document.getElementById("hidden_username").value,
-    document.getElementById("hidden_id").value
-  );
   document.getElementById("loss-modal").submit();
 }
 
 // loading spinner, waiting for player to join
 // if sessionStorage.id is == to res.player_1_id or player_2_id, clear interval for polling and if player 1 set spinner element to hide
 // possibly have to return player usernames in JSON too to populate opponents username
-function query_room_full()
+async function query_room_full()
 {
   let action_link = `##TP_CGI_URL##?action=KOJOLU_PollPlayerTwo&gameId=${sessionStorage.gameId}`
   let action_first_event = `##TP_CGI_URL##?action=KOJOLU_insertFirst&gameId=${sessionStorage.gameId}`
   let spinner = document.getElementById("spinner")
 
-  fetch(action_link)
+  await fetch(action_link)
   .then(response => response.text())
   .then(data => {
 
@@ -293,11 +297,14 @@ function query_room_full()
           sessionStorage.setItem("player_2_id", res_2.waiting_player_id)
           sessionStorage.setItem("player_1_username", res_2.player_1_username)
           sessionStorage.setItem("player_2_username", res_2.player_2_username)    
-        
+
+          name0El.textContent = res_2.player_1_username
+          name1El.textContent = res_2.player_2_username        
         })
 
         clearInterval(query_room_full_interval)
         spinner.style.display = "none"
+
       }
 
     })
@@ -322,10 +329,7 @@ async function query_last_event()
     res = JSON.parse(result)
   })
   
-  check_modal()
-
-  console.log(parseInt(sessionStorage.id))
-  console.log(parseInt(res.current_player_id))
+  check_modal() 
   
   if (parseInt(last_event_id) !== parseInt(res.event_id)) {
       last_event_id = res.event_id

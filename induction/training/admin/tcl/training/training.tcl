@@ -663,12 +663,12 @@ namespace eval TRAINING {
 
 
 			# if the room stake is greater than the user's balance...
-			if {[db_get_col $rs $i stake_amount] > $balance_threshold} {
+			if {[db_get_col $rs $i stake_amount] > $balance_threshold && [findGameRejoin [db_get_col $rs $i room_id] $user_id] == 0} {
 				# ...set a var to indicate that this user can't join the room
-				tpSetVar stake_above_threshold 1
+				set ROOM($i,room_available) "Balance too Low!"
 			} else {
 				# otherwise set a var to indicate that they can join
-				tpSetVar stake_above_threshold 0
+				set ROOM($i,room_available) "Join"
 			}
 
 			set ROOM($i,room_id) [db_get_col $rs $i room_id]
@@ -687,6 +687,8 @@ namespace eval TRAINING {
 		tpBindVar ROOM_STAKE 	ROOM stake_amount room_idx
 		tpBindVar ROOM_WIN 	 	ROOM win_amount   room_idx
 		tpBindVar ROOM_SESSION 	ROOM in_session   room_idx
+		tpBindVar ROOM_AVAILABLE ROOM room_available   room_idx
+
 
 		catch {db_close $rs}
 
