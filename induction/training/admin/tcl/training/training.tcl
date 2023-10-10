@@ -15,6 +15,82 @@ namespace eval TRAINING {
 	asSetAct KOJOLU_PollPlayerTwo     [namespace code pollPlayerTwo]
 	asSetAct KOJOLU_insertFirst       [namespace code insert_first_event]
 	asSetAct KOJOLU_getLatestEventJSON [namespace code getLatestEventJSON]
+	asSetAct KOJOLU_history 		   [namespace code find_game_history]
+
+	proc find_game_history args {
+
+		global DB HISTORY
+		set user_id [reqGetArg user_id]
+
+		set hist {
+			SELECT
+				g.game_id,
+				g.end_time AS game_end_time,
+				g.player_1_id,
+				g.player_2_id,
+				u1.username AS player_1_username,
+				u2.username AS player_2_username,
+				e.player_1_score,
+				e.player_2_score
+			FROM
+				tgamekojolu g
+			INNER JOIN
+				tuserkojolu u1 ON g.player_1_id = u1.user_id
+			INNER JOIN
+				tuserkojolu u2 ON g.player_2_id = u2.user_id
+			LEFT JOIN
+				tgameeventkojolu e ON g.game_id = e.game_id
+			WHERE
+				(g.player_1_id = ? OR g.player_2_id = ?)
+				AND g.end_time IS NOT NULL
+				AND e.event_id = (
+					SELECT MAX(event_id)
+					FROM tgameeventkojolu
+					WHERE game_id = g.game_id
+				)
+			ORDER BY
+				g.end_time DESC;
+		}
+
+		set stmt [inf_prep_sql $DB $hist]
+		set rs [inf_exec_stmt $stmt $user_id $user_id]
+
+		set num_rows [db_get_nrows $rs]
+		tpSetVar num_games $num_rows
+
+		puts "INSIDE HISTORY WITH $num_rows games found for id $user_id"
+
+		for {set i 0} {$i < $num_rows} {incr i} {
+
+			set HISTORY($i,game_end_time) [db_get_col $rs $i game_end_time]
+			set HISTORY($i,player_1_username) [db_get_col $rs $i player_1_username]
+			set HISTORY($i,player_1_score) [db_get_col $rs $i player_1_score]
+			set HISTORY($i,player_2_username) [db_get_col $rs $i player_2_username]
+			set HISTORY($i,player_2_score) [db_get_col $rs $i player_2_score]
+
+			if {$user_id == [db_get_col $rs $i player_1_id] && [db_get_col $rs $i player_1_score] >= 100} {
+				set HISTORY($i,result) WIN			
+			} elseif {$user_id == [db_get_col $rs $i player_2_id] && [db_get_col $rs $i player_2_score] >= 100} {
+				set HISTORY($i,result) WIN			
+			} else {
+				set HISTORY($i,result) LOSS			
+			}
+
+		}
+
+		tpBindVar HISTORY_DATE 				HISTORY game_end_time 	  		history_idx
+		tpBindVar HISTORY_PLAYER_1_NAME 	HISTORY player_1_username 		history_idx
+		tpBindVar HISTORY_PLAYER_1_SCORE 	HISTORY player_1_score   		history_idx
+		tpBindVar HISTORY_PLAYER_2_SCORE 	HISTORY player_2_score   		history_idx
+		tpBindVar HISTORY_PLAYER_2_NAME  	HISTORY player_2_username   	history_idx
+		tpBindVar HISTORY_RESULT  			HISTORY result   				history_idx
+
+		catch {inf_close_stmt $stmt}
+		catch {db_close $rs}
+
+		asPlayFile -nocache training/greedy_pig/history.html
+
+	}
 
 	proc win_event args {
 
