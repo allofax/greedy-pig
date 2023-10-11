@@ -21,6 +21,7 @@
         </div>
       </div>
 
+    <div id="t-container">
       <table id="hist-table">
           <thead>
             <tr>
@@ -29,9 +30,7 @@
                 <th id="result-header">RESULT</th>
             </tr>
           </thead>
-
           <tbody>
-
           ##TP_LOOP history_idx {[tpGetVar num_games]}##
           <tr>
             <td>##TP_HISTORY_DATE##</td>
@@ -39,11 +38,9 @@
             <td>##TP_HISTORY_RESULT##</td>
           </tr>
           ##TP_ENDLOOP## 
-          
           </tbody>
-
       </table>
-
+    </div>
   </body>
 
   <script>

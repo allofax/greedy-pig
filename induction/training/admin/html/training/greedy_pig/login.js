@@ -31,21 +31,26 @@ function validationHandler (e) {
 
     }
 }
-function send_details(event)
-{
-    let username = document.querySelector("input[name='username']").value.trim();
 
+async function send_details(event)
+{
+
+    event.preventDefault()
+
+    let username = document.querySelector("input[name='username']").value.trim();
     var action_link = "##TP_CGI_URL##?action=KOJOLU_login&username=" + username;
 
-     fetch(action_link)
-        .then(response => response.text())
-        .then(data => {
-            console.log(data)
-            console.log(JSON.parse(data))
-            var res = JSON.parse(data)
-            sessionStorage.setItem("id",res["id"])
-            sessionStorage.setItem("username",res["username"])    
-            userid.value += res["id"]
-            document.getElementById("login-box").submit()
-        }) 
+    await fetch(action_link)
+    .then(response => response.text())
+    .then(data => {
+        console.log(data)
+        console.log(JSON.parse(data))
+        var res = JSON.parse(data)
+        sessionStorage.setItem("id",res.id)
+        sessionStorage.setItem("username",res.username)    
+    })      
+
+    userid.value = sessionStorage.id
+    document.getElementById("login-box").submit()
+
 }
