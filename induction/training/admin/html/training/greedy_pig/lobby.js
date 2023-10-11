@@ -31,6 +31,29 @@ window.onload = (event) => {
 
 }
 
+
+inputDeposit.addEventListener("input", validationHandler)
+inputDeposit.addEventListener("blur", validationHandler)
+
+function validationHandler (e) {
+    if (e.target.value === "" || parseInt(e.target.value) > parseInt(sessionStorage.remaining_limit)) {
+    
+        error_text.innerHTML = "Please enter a valid amount"
+        error_text.style.display = "block"
+        inputDeposit.style.background = "#db6767";
+        btnDeposit.classList.add("button--invisible");
+        btnDeposit.disabled = true
+
+    } else {
+        error_text.innerHTML = ""
+        error_text.style.display = ""
+        inputDeposit.style.background = "";
+        btnDeposit.classList.remove("button--invisible");
+        btnDeposit.disabled = false
+
+    }
+}
+
 btn.onclick = function () {
 
   var action_link = "##TP_CGI_URL##?action=KOJOLU_checklimit&id=" + sessionStorage.id;

@@ -1,5 +1,5 @@
 'use strict';
-
+ 
 // Selecting Elements
 const player0El = document.querySelector('.player--0');
 const player1El = document.querySelector('.player--1');
@@ -244,7 +244,6 @@ function check_modal()
   {
     if (parseInt(sessionStorage.id) == parseInt(res.waiting_player_id))
     {
-        startConfetti()        
         win_modal.style.display = "block"
         let win_aud = new Audio(`http://dev02.openbet/user_static/kpietrzy/office_static//sound_manager/audio/win.mp3`)
         win_aud.play()
