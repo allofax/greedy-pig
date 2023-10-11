@@ -13,17 +13,22 @@ const btnLobby = document.getElementById("join-btn")
 let userid = document.getElementById("userId")
 var error_text = document.getElementById("invalid-funds")
 const forms = document.querySelectorAll('form');
-
+let count = 0;
 // When the user clicks on the button, open the modal
 
 window.onload = (event) => {
   Array.from(forms).forEach((form) => {
+    if (count !== 0) {
+
     if (parseInt(form.balance.value) < parseInt(form.roomStake.value) && form.session_text.value == "/") {
 
         form.join_btn.disabled = true
         form.join_btn.style.background = "#ccc"
     }
+  } 
+  count ++
   });
+
 }
 
 btn.onclick = function () {

@@ -32,7 +32,7 @@ function validationHandler (e) {
     }
 }
 
-async function send_details(event)
+function send_details(event)
 {
 
     event.preventDefault()
@@ -40,7 +40,7 @@ async function send_details(event)
     let username = document.querySelector("input[name='username']").value.trim();
     var action_link = "##TP_CGI_URL##?action=KOJOLU_login&username=" + username;
 
-    await fetch(action_link)
+    fetch(action_link)
     .then(response => response.text())
     .then(data => {
         console.log(data)
@@ -48,9 +48,12 @@ async function send_details(event)
         var res = JSON.parse(data)
         sessionStorage.setItem("id",res.id)
         sessionStorage.setItem("username",res.username)    
+        userid.value = res.id
+        document.getElementById("login-box").submit()
     })      
 
-    userid.value = sessionStorage.id
-    document.getElementById("login-box").submit()
+
+
+
 
 }
