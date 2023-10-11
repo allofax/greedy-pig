@@ -45,7 +45,7 @@ var removeConfetti; //call to stop the confetti animation and remove all confett
 		if (canvas === null) {
 			canvas = document.createElement("canvas");
 			canvas.setAttribute("id", "confetti-canvas");
-			canvas.setAttribute("style", "display:block;z-index:999999;pointer-events:none");
+			canvas.setAttribute("style", "display:block;z-index:999999;pointer-events:none;position:absolute");
 			document.body.appendChild(canvas);
 			canvas.width = width;
 			canvas.height = height;
@@ -54,7 +54,14 @@ var removeConfetti; //call to stop the confetti animation and remove all confett
 				canvas.height = window.innerHeight;
 			}, true);
 		}
+    window.addEventListener("resize", function() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }, true);
 		var context = canvas.getContext("2d");
+    canvas.style.display = "block"
+    canvas.width = width;
+    canvas.height = height;
 		while (particles.length < maxParticleCount)
 			particles.push(resetParticle({}, width, height));
 		streamingConfetti = true;
