@@ -281,8 +281,8 @@ async function query_room_full()
   .then(response => response.text())
   .then(data => {
 
-      let res = JSON.parse(data)
-      let room_full = res.full
+      let res_2 = JSON.parse(data)
+      let room_full = res_2.full
 
 
       if (room_full == 1)
@@ -291,20 +291,21 @@ async function query_room_full()
           .then(response => response.text())
           .then(data => {
 
-          let res_2 = JSON.parse(data)
+          res = JSON.parse(data)
 
-          sessionStorage.setItem("game_table_player_1_id", res_2.game_table_player_1_id)
-          sessionStorage.setItem("player_1_id", res_2.current_player_id)
-          sessionStorage.setItem("player_2_id", res_2.waiting_player_id)
-          sessionStorage.setItem("player_1_username", res_2.player_1_username)
-          sessionStorage.setItem("player_2_username", res_2.player_2_username)    
+          sessionStorage.setItem("game_table_player_1_id", res.game_table_player_1_id)
+          sessionStorage.setItem("player_1_id", res.current_player_id)
+          sessionStorage.setItem("player_2_id", res.waiting_player_id)
+          sessionStorage.setItem("player_1_username", res.player_1_username)
+          sessionStorage.setItem("player_2_username", res.player_2_username)    
 
-          name0El.textContent = res_2.player_1_username
-          name1El.textContent = res_2.player_2_username        
+          name0El.textContent = res.player_1_username
+          name1El.textContent = res.player_2_username        
         })
 
         clearInterval(query_room_full_interval)
         spinner.style.display = "none"
+        init()
 
       }
 
