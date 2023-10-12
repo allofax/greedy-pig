@@ -1,15 +1,11 @@
-insert into tUserKojolu (username)
+insert into tPlayRoomKojolu (stake_amount, win_amount)
 values
-('TestUsername');
+(5, 7.5);
 
-insert into tUserKojolu (username)
+insert into tPlayRoomKojolu (stake_amount, win_amount)
 values
-('Xavier');
+(10, 15);
 
-insert into tAccountKojolu (user_id, account_type)
+insert into tPlayRoomKojolu (stake_amount, win_amount)
 values
-(1, 'Debit');
-
-insert into tAccountKojolu (user_id, account_type)
-values
-(2, 'Debit');
+(20, 30);
